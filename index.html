@@ -64,9 +64,11 @@
   .cal-items{display:flex;flex-direction:column;gap:1px;min-width:0;overflow:hidden;}
   .cal-item-chip{font-size:9.5px;line-height:1.3;padding:1px 3px;border-radius:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .cal-item-chip.meeting{background:#EFE7D8;color:#8A6D3B;}
-  .cal-item-chip.docs{background:#D8E8F5;color:#2E6DA4;}
-  .cal-item-chip.report{background:#D7ECE8;color:#2F7D6E;}
-  .cal-item-chip.close{background:#F4E3C6;color:var(--amber);}
+  .cal-item-chip.received{background:#E3DEF0;color:#5B4B8A;}
+  .cal-item-chip.organize{background:#D8E8F5;color:#2E6DA4;}
+  .cal-item-chip.report1{background:#D7ECE8;color:#2F7D6E;}
+  .cal-item-chip.report2{background:#CDE7DA;color:#1F6E52;}
+  .cal-item-chip.final{background:#F4E3C6;color:var(--amber);}
   .cal-item-chip.statutory{background:#F1D9D5;color:var(--stamp);}
   .cal-item-chip.done{background:#DCEAE4;color:var(--seal-green);text-decoration:line-through;}
 
@@ -104,18 +106,20 @@
   .hero-card.done .hc-dday{color:var(--seal-green);}
   .hero-empty{font-size:12px;color:var(--muted);padding:10px 2px;}
 
-  .month-due-box{
+  .month3-box{
     border:1px solid var(--line);background:var(--paper-raise);padding:14px 16px;margin:18px 0 0;
   }
-  .month-due-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;}
-  .month-due-head .mdh-title{font-family:"Noto Serif KR",serif;font-weight:700;font-size:14px;}
-  .month-due-head .mdh-count{font-family:"Roboto Mono",monospace;font-size:26px;font-weight:700;color:var(--stamp);}
-  .month-due-head .mdh-sub{font-size:11px;color:var(--muted);}
-  .month-due-list{margin-top:10px;display:flex;flex-direction:column;}
-  .mdl-item{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12.5px;padding:6px 0;border-bottom:1px dashed var(--line-soft);}
-  .mdl-item:last-child{border-bottom:none;}
-  .mdl-name{flex:1;min-width:0;}
-  .mdl-date{color:var(--muted);font-size:11px;flex-shrink:0;}
+  .month3-head{font-family:"Noto Serif KR",serif;font-weight:700;font-size:14px;margin-bottom:10px;}
+  .month3-cells{display:flex;gap:12px;flex-wrap:wrap;}
+  .m3-cell{flex:1;min-width:120px;border:1px solid var(--line-soft);background:#fff;padding:12px 14px;cursor:pointer;transition:background 0.15s;}
+  .m3-cell:hover{background:#EFEDE2;}
+  .m3-cell.active{border-color:var(--ink);background:#EFEDE2;}
+  .m3-cell .num{font-family:"Roboto Mono",monospace;font-size:24px;font-weight:700;line-height:1;}
+  .m3-cell .label{font-size:11px;color:var(--muted);margin-top:5px;user-select:none;}
+  .m3-cell.m3-this .num{color:var(--stamp);}
+  .m3-cell.m3-next .num{color:var(--amber);}
+  .m3-cell.m3-next2 .num{color:var(--ink-soft);}
+  .month3-detail{margin-top:10px;border-top:1px dashed var(--line-soft);padding-top:10px;}
 
   .compliance-box{border:1px solid var(--line);background:var(--paper-raise);padding:14px 16px;margin:18px 0 0;}
   .compliance-head{font-family:"Noto Serif KR",serif;font-weight:700;font-size:14px;margin-bottom:10px;}
@@ -222,6 +226,9 @@
   .req-cat.cat-capital{background:#E3DEF0;color:#5B4B8A;}
   .req-cat.cat-etc{background:#E9E7DC;color:var(--muted);}
   .req-task{font-size:12px;color:var(--ink-soft);margin-top:2px;white-space:pre-line;line-height:1.4;}
+  .note-add-box{display:flex;gap:6px;margin-top:6px;align-items:center;flex-wrap:wrap;}
+  .note-add-box input[type=text]{font-family:inherit;font-size:12px;padding:6px 8px;border:1px solid var(--line);border-radius:var(--radius);flex:1;min-width:160px;}
+  .note-add-box button{padding:6px 10px;font-size:11px;}
   .req-row:hover{background:rgba(0,0,0,0.02);}
   .req-main{flex:1;min-width:0;}
   .req-dates{display:flex;flex-direction:column;gap:4px;min-width:180px;padding-top:2px;}
@@ -301,13 +308,26 @@
     <div class="hero-dday-list" id="heroDdayList"></div>
   </div>
 
-  <div class="month-due-box">
-    <div class="month-due-head">
-      <span class="mdh-title">이번달 신고 마감 대상</span>
-      <span class="mdh-count mono" id="monthDueCount">0</span>
-      <span class="mdh-sub">건 · <span id="monthDueSub"></span></span>
+  <div class="month3-box">
+    <div class="month3-head">법정신고 예정 현황 (이번달 · 다음달 · 다다음달)</div>
+    <div class="month3-cells">
+      <div class="m3-cell m3-this" id="m3Cell0" onclick="toggleMonth3Detail(0)">
+        <div class="num mono" id="m3Count0">0</div>
+        <div class="label" id="m3Label0">이번달</div>
+      </div>
+      <div class="m3-cell m3-next" id="m3Cell1" onclick="toggleMonth3Detail(1)">
+        <div class="num mono" id="m3Count1">0</div>
+        <div class="label" id="m3Label1">다음달</div>
+      </div>
+      <div class="m3-cell m3-next2" id="m3Cell2" onclick="toggleMonth3Detail(2)">
+        <div class="num mono" id="m3Count2">0</div>
+        <div class="label" id="m3Label2">다다음달</div>
+      </div>
     </div>
-    <div class="month-due-list" id="monthDueList"></div>
+    <div class="month3-detail" id="month3Detail" style="display:none;">
+      <div class="summary-detail-head" id="month3DetailHead"></div>
+      <div class="summary-detail-list" id="month3DetailList"></div>
+    </div>
   </div>
 
   <div class="overview-row" id="overviewRow">
@@ -390,31 +410,39 @@
         </div>
         <div>
           <label>법정신고기한</label>
-          <input type="date" id="qStatutory" onchange="autofillScheduleIfEmpty()">
+          <input type="date" id="qStatutory">
         </div>
         <div style="align-self:flex-end;">
           <button class="btn-calc" id="qCalcBtn" onclick="applyCalcStatutory()">⚖ 법정신고기한 자동계산(덮어쓰기)</button>
         </div>
 
-        <div class="field-group-label">② 내부 처리 일정 (미팅일·법정신고기한 입력 시 자동 배분, 개별 수정 가능)</div>
+        <div class="field-group-label">② 내부 처리 일정 (자료수취일 기준 자동계산 — 상속 외 5→3→3→3일, 상속 10→5→5→5일, 개별 수정 가능)</div>
         <div>
           <label>미팅일</label>
-          <input type="date" id="qMeeting" onchange="autofillScheduleIfEmpty()">
+          <input type="date" id="qMeeting" onchange="onMeetingChange()">
         </div>
         <div>
-          <label>자료정리기한</label>
-          <input type="date" id="qDocs">
+          <label>자료수취일 (기본: 미팅일과 동일, 직접 입력 가능)</label>
+          <input type="date" id="qReceived" onchange="onReceivedChange()">
         </div>
         <div>
-          <label>1차보고기한</label>
-          <input type="date" id="qReport">
+          <label>자료 1차 정리일</label>
+          <input type="date" id="qOrganize">
         </div>
         <div>
-          <label>1차마감기한</label>
-          <input type="date" id="qClose">
+          <label>1차 보고일</label>
+          <input type="date" id="qReport1">
+        </div>
+        <div>
+          <label>2차 보고일</label>
+          <input type="date" id="qReport2">
+        </div>
+        <div>
+          <label>최종 보고일</label>
+          <input type="date" id="qFinal">
         </div>
         <div style="align-self:flex-end;">
-          <button class="btn-calc" id="qScheduleBtn" onclick="forceDistributeSchedule()">📅 내부일정 자동배분(덮어쓰기)</button>
+          <button class="btn-calc" id="qScheduleBtn" onclick="forceDistributeSchedule()">📅 내부일정 자동계산(덮어쓰기)</button>
         </div>
 
         <div style="flex:1;min-width:260px;">
@@ -439,7 +467,11 @@
       · 자본거래(증자·감자 등 증여의제) : 이익을 받은 것으로 보는 날이 속하는 달의 말일부터 3개월 — 상속세및증여세법 §68①(§39~§42의3 등 개별 증여의제 규정)<br>
       · 신고기한 말일이 토요일·공휴일이면 그 다음날로 연장 — 국세기본법 §5① (공휴일 데이터는 미반영, 재확인 필요)<br>
       · 주식평가·배당·기타는 별도 법정신고기한이 정형화되어 있지 않아 자동계산을 지원하지 않습니다.<br>
-      <b>내부 일정(자료정리·1차보고·1차마감) 자동배분은 법적 근거가 아니라 사무소 내부 업무관리를 위한 참고용 분배(미팅일~법정신고기한 구간의 약 25%/55%/88% 지점)이며, 언제든 직접 수정할 수 있습니다.</b>
+      <b>내부 일정(자료 1차 정리일·1차 보고일·2차 보고일·최종 보고일) 자동계산은 법적 근거가 아니라 사무소 내부 업무관리를 위한 참고용 계산이며, 언제든 직접 수정할 수 있습니다.</b><br>
+      · 미팅일과 자료수취일은 기본적으로 같은 날로 채워지며, 자료수취일은 별도로 직접 입력·수정할 수 있습니다.<br>
+      · 상속 외(양도·증여·주식평가·배당·자본거래·기타): 자료수취일부터 5일 후 1차 정리일 → 3일 후 1차 보고일 → 3일 후 2차 보고일 → 3일 후 최종 보고일<br>
+      · 상속: 자료수취일부터 10일 후 1차 정리일 → 5일 후 1차 보고일 → 5일 후 2차 보고일 → 5일 후 최종 보고일<br>
+      · 법정신고기한은 이 내부 일정과 별개로, 위 법령 기준(또는 직접 입력)으로 정해집니다.
     </div>
 
     <div id="reqList"></div>
@@ -476,7 +508,7 @@ const STORAGE_KEY = 'taxmancall_capital_deadline_v2';
    섞이므로, 반드시 이 대장 전용의 별도 구글 시트/Apps Script 배포를
    새로 만들어 아래 GAS_URL에 연결하세요. 비워두면 이 PC 로컬 저장만 사용합니다.
    ================================================================ */
-const GAS_URL = ''; // 예: 'https://script.google.com/macros/s/AKfycb.../exec' (전용 시트로 별도 배포)
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzGDSk5LVmeG_LnALjsQELX05d90Dl8eIXvlpyz-3YjGny68MJF7aOJu5sQ94KJZrAt/exec';
 const SHEET_PW_KEY = 'taxmancall_capital_sheet_pw';
 
 function cloudEnabled(){ return !!GAS_URL; }
@@ -629,7 +661,6 @@ function applyCalcStatutory(){
   document.getElementById('qStatutory').value = dateKey(result.date);
   noteEl.textContent = '⚖ 자동계산(참고): ' + result.note + ' → ' + fmt(result.date) + ' · 반드시 홈택스·국세청 자료로 최종 확인하세요.';
   noteEl.classList.add('show');
-  autofillScheduleIfEmpty();
 }
 
 /* 기준일만 입력되고 법정신고기한이 비어있을 때 자동으로(조용히) 채워줌 — 값이 이미 있으면 덮어쓰지 않음 */
@@ -646,82 +677,91 @@ function autofillStatutoryFromBase(){
   const noteEl = document.getElementById('qCalcNote');
   noteEl.textContent = '⚖ 자동계산(참고): ' + result.note + ' → ' + fmt(result.date) + ' · 반드시 홈택스·국세청 자료로 최종 확인하세요.';
   noteEl.classList.add('show');
-  autofillScheduleIfEmpty();
 }
 
-/* ---------- 내부 처리일정 자동배분(참고용) ----------
-   미팅일(M)~법정신고기한(S) 구간을 약 25% / 55% / 88% 지점으로 나누어
-   자료정리기한 / 1차보고기한 / 1차마감기한을 제안합니다.
-   법적 근거가 아니라 사무소 내부 업무관리를 위한 참고 배분이며, 각 항목은
+/* ---------- 내부 처리일정 자동계산(참고용) ----------
+   미팅일~법정신고기한 구간을 나누는 방식이 아니라, 자료수취일을 시작점으로
+   구분(상속 / 상속 외)에 따른 고정 간격을 순서대로 더해 자료 1차 정리일 →
+   1차 보고일 → 2차 보고일 → 최종 보고일을 계산합니다.
+   법정신고기한은 이 계산과 무관하게 별도로(법령 또는 직접 입력) 정해집니다.
+   법적 근거가 아니라 사무소 내부 업무관리를 위한 참고 계산이며, 각 항목은
    언제든 개별적으로 직접 수정(선택입력)할 수 있습니다. */
-function distributeSchedule(meetingStr, statutoryStr){
-  if(!meetingStr || !statutoryStr) return null;
-  const M = new Date(meetingStr+'T00:00:00');
-  const S = new Date(statutoryStr+'T00:00:00');
-  const totalDays = Math.round((S-M)/86400000);
-  if(totalDays <= 0) return null;
-  const clampOffset = (n) => Math.max(1, Math.min(totalDays-1, n));
-
-  let docsOffset = clampOffset(Math.round(totalDays*0.25));
-  let reportOffset = clampOffset(Math.max(docsOffset+1, Math.round(totalDays*0.55)));
-  let closeOffset = clampOffset(Math.max(reportOffset+1, totalDays - Math.round(totalDays*0.12)));
-  if(reportOffset <= docsOffset) reportOffset = clampOffset(docsOffset+1);
-  if(closeOffset <= reportOffset) closeOffset = clampOffset(reportOffset+1);
-
-  const capBeforeS = (d) => (d >= S) ? addDays(S,-1) : d;
-  const docs = capBeforeS(adjustForWeekendStrict(addDays(M, docsOffset)));
-  const report = capBeforeS(adjustForWeekendStrict(addDays(M, reportOffset)));
-  const close = capBeforeS(adjustForWeekendStrict(addDays(M, closeOffset)));
-  return { docs, report, close };
+function computeInternalChain(receivedStr, category){
+  if(!receivedStr) return null;
+  const R = new Date(receivedStr+'T00:00:00');
+  const isInherit = category === '상속';
+  const offsets = isInherit ? [10,5,5,5] : [5,3,3,3];
+  const organize = addDays(R, offsets[0]);
+  const report1 = addDays(organize, offsets[1]);
+  const report2 = addDays(report1, offsets[2]);
+  const finalReport = addDays(report2, offsets[3]);
+  return { organize, report1, report2, finalReport, isInherit };
+}
+function scheduleRuleText(isInherit){
+  return isInherit ? '상속: 자료수취일부터 10→5→5→5일 간격' : '상속 외: 자료수취일부터 5→3→3→3일 간격';
 }
 
-/* 미팅일·법정신고기한이 모두 채워지면, 비어있는 자료정리/1차보고/1차마감 필드만 자동으로 채움(기존 입력값은 보존) */
-function autofillScheduleIfEmpty(){
+/* 미팅일 입력 시, 자료수취일이 비어있으면 미팅일과 같은 날로 채움(직접 입력값은 보존) */
+function onMeetingChange(){
   const meetingVal = document.getElementById('qMeeting').value;
-  const statutoryVal = document.getElementById('qStatutory').value;
-  if(!meetingVal || !statutoryVal) return;
-  const result = distributeSchedule(meetingVal, statutoryVal);
-  const noteEl = document.getElementById('qScheduleNote');
-  if(!result){
-    noteEl.textContent = '미팅일이 법정신고기한보다 늦어 내부 일정을 자동배분할 수 없습니다. 날짜를 확인해 주세요.';
-    noteEl.classList.add('show');
-    return;
+  const receivedEl = document.getElementById('qReceived');
+  if(meetingVal && !receivedEl.value){
+    receivedEl.value = meetingVal;
   }
-  const docsEl = document.getElementById('qDocs');
-  const reportEl = document.getElementById('qReport');
-  const closeEl = document.getElementById('qClose');
-  if(!docsEl.value) docsEl.value = dateKey(result.docs);
-  if(!reportEl.value) reportEl.value = dateKey(result.report);
-  if(!closeEl.value) closeEl.value = dateKey(result.close);
-  noteEl.textContent = '📅 내부일정 자동배분(참고): 자료정리 ' + fmt(result.docs) + ' · 1차보고 ' + fmt(result.report) + ' · 1차마감 ' + fmt(result.close) + ' · 필요시 각 항목을 직접 수정하세요.';
+  autofillChainIfEmpty();
+}
+function onReceivedChange(){
+  autofillChainIfEmpty();
+}
+
+/* 자료수취일이 채워지면, 비어있는 1차정리/1차보고/2차보고/최종보고 필드만 자동으로 채움(기존 입력값은 보존) */
+function autofillChainIfEmpty(){
+  const receivedVal = document.getElementById('qReceived').value;
+  if(!receivedVal) return;
+  const category = document.getElementById('qCategory').value;
+  const chain = computeInternalChain(receivedVal, category);
+  if(!chain) return;
+  const organizeEl = document.getElementById('qOrganize');
+  const report1El = document.getElementById('qReport1');
+  const report2El = document.getElementById('qReport2');
+  const finalEl = document.getElementById('qFinal');
+  if(!organizeEl.value) organizeEl.value = dateKey(chain.organize);
+  if(!report1El.value) report1El.value = dateKey(chain.report1);
+  if(!report2El.value) report2El.value = dateKey(chain.report2);
+  if(!finalEl.value) finalEl.value = dateKey(chain.finalReport);
+  const noteEl = document.getElementById('qScheduleNote');
+  noteEl.textContent = `📅 내부일정 자동계산(참고, ${scheduleRuleText(chain.isInherit)}): 1차정리 ${fmt(chain.organize)} · 1차보고 ${fmt(chain.report1)} · 2차보고 ${fmt(chain.report2)} · 최종보고 ${fmt(chain.finalReport)} · 필요시 각 항목을 직접 수정하세요.`;
   noteEl.classList.add('show');
 }
 
 /* 버튼 클릭 시 기존 값과 무관하게 강제로 다시 계산해 덮어씀 */
 function forceDistributeSchedule(){
-  const meetingVal = document.getElementById('qMeeting').value;
-  const statutoryVal = document.getElementById('qStatutory').value;
-  if(!meetingVal || !statutoryVal){ toast('미팅일과 법정신고기한을 먼저 입력해 주세요.'); return; }
-  const result = distributeSchedule(meetingVal, statutoryVal);
-  const noteEl = document.getElementById('qScheduleNote');
-  if(!result){
-    noteEl.textContent = '미팅일이 법정신고기한보다 늦어 내부 일정을 자동배분할 수 없습니다. 날짜를 확인해 주세요.';
-    noteEl.classList.add('show');
-    return;
+  const receivedEl = document.getElementById('qReceived');
+  if(!receivedEl.value){
+    const meetingVal = document.getElementById('qMeeting').value;
+    if(meetingVal) receivedEl.value = meetingVal;
   }
-  document.getElementById('qDocs').value = dateKey(result.docs);
-  document.getElementById('qReport').value = dateKey(result.report);
-  document.getElementById('qClose').value = dateKey(result.close);
-  noteEl.textContent = '📅 내부일정 자동배분(참고, 덮어씀): 자료정리 ' + fmt(result.docs) + ' · 1차보고 ' + fmt(result.report) + ' · 1차마감 ' + fmt(result.close) + ' · 필요시 각 항목을 직접 수정하세요.';
+  const receivedVal = receivedEl.value;
+  if(!receivedVal){ toast('자료수취일(또는 미팅일)을 먼저 입력해 주세요.'); return; }
+  const category = document.getElementById('qCategory').value;
+  const chain = computeInternalChain(receivedVal, category);
+  document.getElementById('qOrganize').value = dateKey(chain.organize);
+  document.getElementById('qReport1').value = dateKey(chain.report1);
+  document.getElementById('qReport2').value = dateKey(chain.report2);
+  document.getElementById('qFinal').value = dateKey(chain.finalReport);
+  const noteEl = document.getElementById('qScheduleNote');
+  noteEl.textContent = `📅 내부일정 자동계산(참고, 덮어씀, ${scheduleRuleText(chain.isInherit)}): 1차정리 ${fmt(chain.organize)} · 1차보고 ${fmt(chain.report1)} · 2차보고 ${fmt(chain.report2)} · 최종보고 ${fmt(chain.finalReport)} · 필요시 각 항목을 직접 수정하세요.`;
   noteEl.classList.add('show');
 }
 
 /* ---------- 처리 단계(마일스톤) 정의 ---------- */
 const MILESTONE_DEFS = [
   {key:'meetingDate', label:'미팅', chip:'meeting'},
-  {key:'docsDeadline', label:'자료정리', chip:'docs'},
-  {key:'reportDeadline', label:'1차보고', chip:'report'},
-  {key:'closeDeadline', label:'1차마감', chip:'close'},
+  {key:'receivedDate', label:'자료수취', chip:'received'},
+  {key:'organizeDate', label:'1차정리', chip:'organize'},
+  {key:'report1Date', label:'1차보고', chip:'report1'},
+  {key:'report2Date', label:'2차보고', chip:'report2'},
+  {key:'finalReportDate', label:'최종보고', chip:'final'},
   {key:'statutory', label:'법정신고', chip:'statutory'}
 ];
 /* 아직 완료되지 않은 케이스에서 "지금 챙겨야 할" 단계를 찾음: 오늘 이후(포함)인 첫 마일스톤,
@@ -822,7 +862,7 @@ function render(){
 
   try{ renderHeroDday(); }catch(err){ console.error('임박 신고기한 패널 렌더링 오류:', err); }
   try{ renderSummaryDetail(); }catch(err){ console.error('요약 상세목록 렌더링 오류:', err); }
-  try{ renderMonthDueFilings(); }catch(err){ console.error('이번달 신고마감 패널 렌더링 오류:', err); }
+  try{ renderMonth3(); }catch(err){ console.error('3개월 신고예정 패널 렌더링 오류:', err); }
   try{ renderCompliance(); }catch(err){ console.error('처리기한 준수 현황 렌더링 오류:', err); }
 }
 
@@ -851,23 +891,63 @@ function renderHeroDday(){
 }
 function catBadgeText(cat){ return cat ? `[${cat}] ` : ''; }
 
-/* ---------- 이번달 신고 마감 대상 ---------- */
-function renderMonthDueFilings(){
+/* ---------- 법정신고 예정 현황 (이번달 · 다음달 · 다다음달) ----------
+   이번달(0번)은 기한초과 건도 포함(아직 신고 안 됐으면 여전히 급한 일이므로),
+   다음달(1번)·다다음달(2번)은 해당 월의 1일~말일 사이에 딱 들어오는 건만 집계.
+   세 구간은 서로 겹치지 않도록 나눠서, 합계가 "3개월 내 신고 대상"을 그대로 나타냄. */
+let month3Active = null; // 0 | 1 | 2 | null
+let month3Data = [[],[],[]];
+const MONTH3_LABEL = ['이번달','다음달','다다음달'];
+
+function computeMonth3(){
   const today = todayDate();
-  const endOfThisMonth = new Date(today.getFullYear(), today.getMonth()+1, 0);
-  const due = state.requests
-    .filter(r=>!r.done && r.statutory && new Date(r.statutory) <= endOfThisMonth)
-    .sort((a,b)=> new Date(a.statutory) - new Date(b.statutory));
-  const overdueCount = due.filter(r=> new Date(r.statutory) < today).length;
-  document.getElementById('monthDueCount').textContent = due.length;
-  document.getElementById('monthDueSub').textContent = due.length
-    ? `${fmt(today)} 기준, ${today.getMonth()+1}월 말일(${fmt(endOfThisMonth)})까지 신고해야 함 (이 중 기한초과 ${overdueCount}건)`
-    : `${today.getMonth()+1}월 말일까지 신고할 대상이 없습니다.`;
-  const listEl = document.getElementById('monthDueList');
-  listEl.innerHTML = due.length === 0 ? '' : due.map(r=>{
-    const dd = ddayInfo(new Date(r.statutory));
-    return `<div class="mdl-item"><span class="mdl-name">${catBadgeHtml(r.category)}${escapeHtml(r.client)}</span><span class="mdl-date mono">${fmtShort(new Date(r.statutory))}</span><span class="dday ${dd.cls}">${dd.label}</span></div>`;
-  }).join('');
+  const ranges = [0,1,2].map(offset=>{
+    const start = new Date(today.getFullYear(), today.getMonth()+offset, 1);
+    const end = new Date(today.getFullYear(), today.getMonth()+offset+1, 0);
+    return {start, end};
+  });
+  const lists = [[],[],[]];
+  state.requests.filter(r=>!r.done && r.statutory).forEach(r=>{
+    const d = new Date(r.statutory);
+    ranges.forEach((rg, idx)=>{
+      const inRange = (idx === 0) ? (d <= rg.end) : (d >= rg.start && d <= rg.end);
+      if(inRange) lists[idx].push(r);
+    });
+  });
+  month3Data = lists;
+}
+
+function renderMonth3(){
+  computeMonth3();
+  const today = todayDate();
+  for(let i=0;i<3;i++){
+    document.getElementById('m3Count'+i).textContent = month3Data[i].length;
+    const d = new Date(today.getFullYear(), today.getMonth()+i, 1);
+    document.getElementById('m3Label'+i).textContent = `${MONTH3_LABEL[i]} (${d.getMonth()+1}월)`;
+  }
+  renderMonth3Detail();
+}
+
+function toggleMonth3Detail(idx){
+  month3Active = (month3Active === idx) ? null : idx;
+  renderMonth3Detail();
+}
+
+function renderMonth3Detail(){
+  document.querySelectorAll('.m3-cell').forEach(el=>el.classList.remove('active'));
+  const panel = document.getElementById('month3Detail');
+  if(month3Active === null){ panel.style.display = 'none'; return; }
+  document.getElementById('m3Cell'+month3Active).classList.add('active');
+  const items = (month3Data[month3Active] || []).slice().sort((a,b)=> new Date(a.statutory) - new Date(b.statutory));
+  document.getElementById('month3DetailHead').textContent = `${MONTH3_LABEL[month3Active]} 법정신고 대상 (${items.length}건)`;
+  const listEl = document.getElementById('month3DetailList');
+  listEl.innerHTML = items.length === 0
+    ? '<div class="summary-detail-empty">해당하는 건이 없습니다.</div>'
+    : items.map(r=>{
+      const dd = ddayInfo(new Date(r.statutory));
+      return `<div class="summary-detail-item"><span class="sdi-name">${catBadgeHtml(r.category)}${escapeHtml(r.client)}</span><span class="sdi-date mono">${fmt(new Date(r.statutory))}</span><span class="dday ${dd.cls}">${dd.label}</span></div>`;
+    }).join('');
+  panel.style.display = '';
 }
 
 /* ---------- 처리기한 준수 현황 ---------- */
@@ -1001,6 +1081,31 @@ function milestoneLineHtml(r, def, currentKey){
   return `<div class="req-date-line"><span class="req-date-label">${def.label}</span><span class="dates">${fmtShort(d)}</span><span class="dday ${dd.cls}">${dd.label}</span></div>`;
 }
 
+/* ---------- 등록 후 의뢰 내용에 계속 메모 추가하기 ----------
+   기존 내용은 그대로 두고, 날짜 스탬프와 함께 줄바꿈해서 이어 붙입니다.
+   (전체 내용을 고쳐 쓰고 싶으면 내보내기/불러오기로 JSON을 직접 편집하세요.) */
+let noteAddOpenSet = new Set();
+function toggleNoteAdd(id){
+  if(noteAddOpenSet.has(id)) noteAddOpenSet.delete(id);
+  else noteAddOpenSet.add(id);
+  renderRequestList();
+}
+function submitNote(id){
+  const input = document.getElementById('noteInput-'+id);
+  if(!input) return;
+  const text = input.value.trim();
+  if(!text){ toast('추가할 내용을 입력해 주세요.'); return; }
+  const r = state.requests.find(x=>x.id===id);
+  if(!r) return;
+  const stamp = fmt(todayDate());
+  r.task = r.task ? (r.task + '\n[' + stamp + '] ' + text) : ('[' + stamp + '] ' + text);
+  saveState();
+  cloudSaveRequests();
+  noteAddOpenSet.delete(id);
+  renderRequestList();
+  toast('메모가 추가되었습니다.');
+}
+
 function requestRowHtml(r){
   const base = r.baseDate ? new Date(r.baseDate) : null;
   const currentKey = r.done ? null : currentMilestoneKey(r);
@@ -1016,12 +1121,15 @@ function requestRowHtml(r){
         <div class="req-task">${escapeHtml(r.task)}</div>
         <div class="gcal-links">
           ${base? `<button class="gcal-link" onclick="openGCal('baseDate','${r.id}')">🗓 기준일</button>` : ''}
-          ${r.meetingDate? `<button class="gcal-link" onclick="openGCal('meetingDate','${r.id}')">🗓 미팅일</button>` : ''}
-          ${r.docsDeadline? `<button class="gcal-link" onclick="openGCal('docsDeadline','${r.id}')">🗓 자료정리</button>` : ''}
-          ${r.reportDeadline? `<button class="gcal-link" onclick="openGCal('reportDeadline','${r.id}')">🗓 1차보고</button>` : ''}
-          ${r.closeDeadline? `<button class="gcal-link" onclick="openGCal('closeDeadline','${r.id}')">🗓 1차마감</button>` : ''}
-          <button class="gcal-link" onclick="openGCal('statutory','${r.id}')">🗓 법정신고</button>
+          ${MILESTONE_DEFS.map(def => r[def.key] ? `<button class="gcal-link" onclick="openGCal('${def.key}','${r.id}')">🗓 ${def.label}</button>` : '').join('')}
+          <button class="gcal-link" onclick="toggleNoteAdd('${r.id}')">📝 메모 추가</button>
         </div>
+        ${noteAddOpenSet.has(r.id) ? `
+        <div class="note-add-box">
+          <input type="text" id="noteInput-${r.id}" placeholder="추가할 내용 입력 후 Enter 또는 추가 버튼" onkeydown="if(event.key==='Enter'){submitNote('${r.id}')}">
+          <button class="btn-primary" onclick="submitNote('${r.id}')">추가</button>
+          <button class="btn-ghost" onclick="toggleNoteAdd('${r.id}')">취소</button>
+        </div>` : ''}
       </div>
       <div class="req-dates">${milestoneLines}</div>
       <div class="check-wrap">
@@ -1095,9 +1203,11 @@ function addRequest(){
   const task = document.getElementById('qTask').value.trim();
   const baseDateVal = document.getElementById('qBaseDate').value;
   const meetingVal = document.getElementById('qMeeting').value;
-  const docsVal = document.getElementById('qDocs').value;
-  const reportVal = document.getElementById('qReport').value;
-  const closeVal = document.getElementById('qClose').value;
+  const receivedVal = document.getElementById('qReceived').value;
+  const organizeVal = document.getElementById('qOrganize').value;
+  const report1Val = document.getElementById('qReport1').value;
+  const report2Val = document.getElementById('qReport2').value;
+  const finalVal = document.getElementById('qFinal').value;
   const statutoryVal = document.getElementById('qStatutory').value;
   if(!client || !statutoryVal){ toast('거래처명/의뢰인명과 법정신고기한은 반드시 입력해 주세요.'); return; }
 
@@ -1113,9 +1223,11 @@ function addRequest(){
     client, phone, task,
     baseDate: toKey(baseDateVal),
     meetingDate: toKey(meetingVal),
-    docsDeadline: toKey(docsVal),
-    reportDeadline: toKey(reportVal),
-    closeDeadline: toKey(closeVal),
+    receivedDate: toKey(receivedVal),
+    organizeDate: toKey(organizeVal),
+    report1Date: toKey(report1Val),
+    report2Date: toKey(report2Val),
+    finalReportDate: toKey(finalVal),
     statutory: toKey(statutoryVal),
     statutoryNote,
     done:false
@@ -1123,7 +1235,7 @@ function addRequest(){
   saveState();
   cloudSaveRequests();
 
-  ['qClient','qPhone','qTask','qBaseDate','qMeeting','qDocs','qReport','qClose','qStatutory'].forEach(id=>{
+  ['qClient','qPhone','qTask','qBaseDate','qMeeting','qReceived','qOrganize','qReport1','qReport2','qFinal','qStatutory'].forEach(id=>{
     document.getElementById(id).value='';
   });
   document.getElementById('qCategory').value='기타';
@@ -1182,7 +1294,7 @@ function checkNotify(overdue, soon){
 }
 
 /* ---------- 구글 캘린더 연동(Quick Add 링크) ---------- */
-const GCAL_FIELD_LABEL = {baseDate:'기준일', meetingDate:'미팅일', docsDeadline:'자료정리기한', reportDeadline:'1차보고기한', closeDeadline:'1차마감기한', statutory:'법정신고기한'};
+const GCAL_FIELD_LABEL = {baseDate:'기준일', meetingDate:'미팅일', receivedDate:'자료수취일', organizeDate:'자료1차정리일', report1Date:'1차보고일', report2Date:'2차보고일', finalReportDate:'최종보고일', statutory:'법정신고기한'};
 function gcalUrl(title, dateObj, details){
   const y = dateObj.getFullYear();
   const m = String(dateObj.getMonth()+1).padStart(2,'0');
@@ -1199,7 +1311,7 @@ function openGCal(kind, id){
   if(!r) return;
   const dateStr = r[kind];
   if(!dateStr) return;
-  const common = `taxmancall 자본거래·상속증여 신고관리대장\n구분: ${r.category||'-'}\n거래처: ${r.client}\n내용: ${r.task}\n기준일: ${r.baseDate||'-'}\n미팅일: ${r.meetingDate||'-'}\n자료정리기한: ${r.docsDeadline||'-'}\n1차보고기한: ${r.reportDeadline||'-'}\n1차마감기한: ${r.closeDeadline||'-'}\n법정신고기한: ${r.statutory}${r.statutoryNote? '\n산정근거: '+r.statutoryNote : ''}`;
+  const common = `taxmancall 자본거래·상속증여 신고관리대장\n구분: ${r.category||'-'}\n거래처: ${r.client}\n내용: ${r.task}\n기준일: ${r.baseDate||'-'}\n미팅일: ${r.meetingDate||'-'}\n자료수취일: ${r.receivedDate||'-'}\n자료1차정리일: ${r.organizeDate||'-'}\n1차보고일: ${r.report1Date||'-'}\n2차보고일: ${r.report2Date||'-'}\n최종보고일: ${r.finalReportDate||'-'}\n법정신고기한: ${r.statutory}${r.statutoryNote? '\n산정근거: '+r.statutoryNote : ''}`;
   const catPrefix = r.category ? `[${r.category}] ` : '';
   const title = `[${GCAL_FIELD_LABEL[kind]}] ${catPrefix}${r.client}`;
   const d = new Date(dateStr+'T00:00:00');
