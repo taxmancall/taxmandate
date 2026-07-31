@@ -337,10 +337,6 @@
       <div class="cstat late"><div class="cnum mono" id="compLate">0</div><div class="clabel">기한 초과 완료</div></div>
       <div class="cstat rate"><div class="cnum mono" id="compRate">-</div><div class="clabel">준수율</div></div>
     </div>
-    <table class="compliance-table" id="compTable">
-      <thead><tr><th>담당자</th><th class="num" style="text-align:right;">완료</th><th class="num" style="text-align:right;">준수</th><th class="num" style="text-align:right;">준수율</th></tr></thead>
-      <tbody id="compTableBody"></tbody>
-    </table>
   </div>
 
   <section class="block">
@@ -349,22 +345,10 @@
       <button class="btn-add" onclick="togglePanel('panelReq')">+ 건 추가</button>
     </div>
     <div class="tag-filter" id="catFilter"></div>
-    <div class="tag-filter" id="staffFilter"></div>
 
     <div class="panel" id="panelReq">
       <div class="fields">
         <div class="field-group-label">기본 정보</div>
-        <div>
-          <label>담당직원</label>
-          <select id="qStaff">
-            <option value="">담당자 선택</option>
-            <option value="임채연">임채연</option>
-            <option value="임민지">임민지</option>
-            <option value="최민정">최민정</option>
-            <option value="김연주">김연주</option>
-            <option value="세무사">세무사</option>
-          </select>
-        </div>
         <div>
           <label>구분</label>
           <select id="qCategory" onchange="onCategoryChange()">
@@ -765,8 +749,6 @@ let catFilterVal = 'all';
 const CAT_LIST = ['양도','상속','증여','주식평가','배당','자본거래','기타'];
 const CAT_CLASS = {'양도':'cat-transfer','상속':'cat-inherit','증여':'cat-gift','주식평가':'cat-stock','배당':'cat-dividend','자본거래':'cat-capital','기타':'cat-etc'};
 const CAT_TAGKEY = {'양도':'transfer','상속':'inherit','증여':'gift','주식평가':'stock','배당':'dividend','자본거래':'capital','기타':'etc'};
-const STAFF_LIST = ['임채연', '임민지', '최민정', '김연주', '세무사'];
-let staffFilter = 'all';
 
 function buildCatFilter(){
   const wrap = document.getElementById('catFilter');
@@ -777,15 +759,6 @@ function buildCatFilter(){
   wrap.innerHTML = html;
 }
 function setCatFilter(cat){ catFilterVal = cat; buildCatFilter(); renderRequestList(); }
-function buildStaffFilter(){
-  const wrap = document.getElementById('staffFilter');
-  let html = `<button class="tag-chip${staffFilter==='all'?' active':''}" onclick="setStaffFilter('all')">전체 담당</button>`;
-  STAFF_LIST.forEach(n=>{
-    html += `<button class="tag-chip${staffFilter===n?' active':''}" onclick="setStaffFilter('${n}')">${escapeHtml(n)}</button>`;
-  });
-  wrap.innerHTML = html;
-}
-function setStaffFilter(name){ staffFilter = name; buildStaffFilter(); renderRequestList(); }
 
 function stepPeriod(dir){
   const d = new Date(viewDate);
@@ -893,7 +866,7 @@ function renderMonthDueFilings(){
   const listEl = document.getElementById('monthDueList');
   listEl.innerHTML = due.length === 0 ? '' : due.map(r=>{
     const dd = ddayInfo(new Date(r.statutory));
-    return `<div class="mdl-item"><span class="mdl-name">${catBadgeHtml(r.category)}${escapeHtml(r.client)}${r.staff? ' · 담당 '+escapeHtml(r.staff):''}</span><span class="mdl-date mono">${fmtShort(new Date(r.statutory))}</span><span class="dday ${dd.cls}">${dd.label}</span></div>`;
+    return `<div class="mdl-item"><span class="mdl-name">${catBadgeHtml(r.category)}${escapeHtml(r.client)}</span><span class="mdl-date mono">${fmtShort(new Date(r.statutory))}</span><span class="dday ${dd.cls}">${dd.label}</span></div>`;
   }).join('');
 }
 
@@ -904,14 +877,7 @@ function computeCompliance(){
   const onTime = done.filter(r=> new Date(r.doneDate) <= new Date(r.statutory)).length;
   const late = total - onTime;
   const rate = total ? Math.round(onTime/total*100) : null;
-  const byStaff = {};
-  done.forEach(r=>{
-    const s = r.staff || '미지정';
-    byStaff[s] = byStaff[s] || {total:0, onTime:0};
-    byStaff[s].total++;
-    if(new Date(r.doneDate) <= new Date(r.statutory)) byStaff[s].onTime++;
-  });
-  return {total, onTime, late, rate, byStaff};
+  return {total, onTime, late, rate};
 }
 function renderCompliance(){
   const c = computeCompliance();
@@ -919,18 +885,6 @@ function renderCompliance(){
   document.getElementById('compOnTime').textContent = c.onTime;
   document.getElementById('compLate').textContent = c.late;
   document.getElementById('compRate').textContent = c.rate === null ? '-' : c.rate + '%';
-  const body = document.getElementById('compTableBody');
-  const staffNames = Object.keys(c.byStaff);
-  if(staffNames.length === 0){
-    body.innerHTML = `<tr><td colspan="4" class="compliance-empty">완료된 건이 없습니다.</td></tr>`;
-    return;
-  }
-  staffNames.sort();
-  body.innerHTML = staffNames.map(s=>{
-    const v = c.byStaff[s];
-    const rate = v.total ? Math.round(v.onTime/v.total*100) : 0;
-    return `<tr><td>${escapeHtml(s)}</td><td class="num mono">${v.total}</td><td class="num mono">${v.onTime}</td><td class="num mono">${rate}%</td></tr>`;
-  }).join('');
 }
 
 /* ---------- 달력 ---------- */
@@ -1058,7 +1012,7 @@ function requestRowHtml(r){
     <div class="req-row">
       <div class="req-main">
         <div class="name">${catBadgeHtml(r.category)}${escapeHtml(r.client)}</div>
-        <div class="rule">${r.staff? '담당 '+escapeHtml(r.staff)+' · ' : ''}${base? '기준일 '+fmtShort(base)+' · ' : ''}${r.phone? '연락처 '+escapeHtml(r.phone) : ''}${extra.length? ' · '+extra.join(', ') : ''}</div>
+        <div class="rule">${base? '기준일 '+fmtShort(base)+' · ' : ''}${r.phone? '연락처 '+escapeHtml(r.phone) : ''}${extra.length? ' · '+extra.join(', ') : ''}</div>
         <div class="req-task">${escapeHtml(r.task)}</div>
         <div class="gcal-links">
           ${base? `<button class="gcal-link" onclick="openGCal('baseDate','${r.id}')">🗓 기준일</button>` : ''}
@@ -1082,11 +1036,9 @@ function requestRowHtml(r){
 function renderRequestList(){
   const reqList = document.getElementById('reqList');
   buildCatFilter();
-  buildStaffFilter();
   const active = state.requests
     .filter(r=>!r.done)
     .filter(r=> catFilterVal==='all' || r.category===catFilterVal)
-    .filter(r=> staffFilter==='all' || r.staff===staffFilter)
     .sort((a,b)=> currentMilestone(a).date - currentMilestone(b).date);
   reqList.innerHTML = active.length === 0
     ? '<div class="empty">진행 중인 건이 없습니다.</div>'
@@ -1135,7 +1087,6 @@ function formatPhoneInput(el){
 }
 
 function addRequest(){
-  const staff = document.getElementById('qStaff').value.trim();
   const category = document.getElementById('qCategory').value;
   const assetType = document.getElementById('qAssetType').value;
   const nonResident = document.getElementById('qNonResident').checked;
@@ -1156,7 +1107,7 @@ function addRequest(){
 
   state.requests.push({
     id:'c'+Date.now(),
-    staff, category,
+    category,
     assetType: category==='양도' ? assetType : '',
     nonResident: category==='상속' ? nonResident : false,
     client, phone, task,
@@ -1172,7 +1123,7 @@ function addRequest(){
   saveState();
   cloudSaveRequests();
 
-  ['qStaff','qClient','qPhone','qTask','qBaseDate','qMeeting','qDocs','qReport','qClose','qStatutory'].forEach(id=>{
+  ['qClient','qPhone','qTask','qBaseDate','qMeeting','qDocs','qReport','qClose','qStatutory'].forEach(id=>{
     document.getElementById(id).value='';
   });
   document.getElementById('qCategory').value='기타';
