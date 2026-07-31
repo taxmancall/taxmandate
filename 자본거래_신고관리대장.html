@@ -1,0 +1,1313 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>자본거래·상속증여 신고관리대장 · taxmancall</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700;900&family=Roboto+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+  :root{
+    --ink:#1B2A4A;
+    --ink-soft:#3C4A66;
+    --paper:#F3F1E9;
+    --paper-raise:#FBFAF6;
+    --line:#CBC6B4;
+    --line-soft:#DEDACB;
+    --muted:#726C5C;
+    --stamp:#B23A2F;
+    --stamp-bright:#C23B22;
+    --seal-green:#3F6B5C;
+    --amber:#B9791C;
+    --radius:2px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--paper);}
+  body{
+    font-family:"Pretendard","Noto Sans KR",sans-serif;
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    background:linear-gradient(var(--paper),var(--paper));
+  }
+  .mono{font-family:"Roboto Mono",monospace;}
+  .serif{font-family:"Noto Serif KR",serif;}
+
+  .sheet{max-width:1000px;margin:0 auto;padding:28px 22px 80px;}
+
+  .letterhead{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    border-bottom:3px double var(--ink);padding-bottom:14px;margin-bottom:6px;
+  }
+  .letterhead .brand{font-family:"Noto Serif KR",serif;font-weight:900;font-size:21px;letter-spacing:0.02em;}
+  .letterhead .brand span{color:var(--stamp);}
+  .letterhead .doc-tag{font-size:11px;color:var(--muted);letter-spacing:0.1em;margin-top:4px;}
+  .letterhead .today{text-align:right;font-size:13px;color:var(--ink-soft);}
+  .letterhead .today .d{font-size:19px;font-weight:700;}
+
+  .overview-row{display:flex;gap:16px;margin:18px 0 30px;align-items:stretch;}
+  .calendar-box{flex:1;min-width:0;border:1px solid var(--line);background:var(--paper-raise);padding:14px 14px 8px;}
+  .calendar-weekdays{
+    display:grid;grid-template-columns:repeat(7,1fr);gap:2px;
+    font-family:"Roboto Mono",monospace;font-size:11px;color:var(--muted);
+    text-align:center;padding-bottom:6px;border-bottom:1px solid var(--line-soft);margin-bottom:4px;
+  }
+  .calendar-weekdays .wd.sun{color:var(--stamp);}
+  .calendar-weekdays .wd.sat{color:var(--ink-soft);}
+  .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:minmax(68px,auto);gap:2px;}
+  .cal-cell{border:1px solid transparent;padding:4px 4px 3px;min-height:68px;min-width:0;overflow:hidden;display:flex;flex-direction:column;gap:2px;}
+  .cal-cell.empty{background:none;}
+  .cal-cell.has-day{border-color:var(--line-soft);}
+  .cal-cell.is-today{border-color:var(--stamp);background:rgba(178,58,47,0.05);}
+  .cal-daynum{font-family:"Roboto Mono",monospace;font-size:11px;color:var(--ink-soft);font-weight:600;}
+  .cal-cell.is-today .cal-daynum{color:var(--stamp);}
+  .cal-items{display:flex;flex-direction:column;gap:1px;min-width:0;overflow:hidden;}
+  .cal-item-chip{font-size:9.5px;line-height:1.3;padding:1px 3px;border-radius:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .cal-item-chip.meeting{background:#EFE7D8;color:#8A6D3B;}
+  .cal-item-chip.docs{background:#D8E8F5;color:#2E6DA4;}
+  .cal-item-chip.report{background:#D7ECE8;color:#2F7D6E;}
+  .cal-item-chip.close{background:#F4E3C6;color:var(--amber);}
+  .cal-item-chip.statutory{background:#F1D9D5;color:var(--stamp);}
+  .cal-item-chip.done{background:#DCEAE4;color:var(--seal-green);text-decoration:line-through;}
+
+  .summary-side{display:flex;flex-direction:column;gap:10px;width:150px;flex-shrink:0;}
+  .side-cell{flex:1;border:1px solid var(--line);background:var(--paper-raise);padding:14px 12px;display:flex;flex-direction:column;justify-content:center;cursor:pointer;transition:background 0.15s;}
+  .side-cell:hover{background:#EFEDE2;}
+  .side-cell.active{border-color:var(--ink);background:#EFEDE2;}
+  .side-cell .num{font-family:"Roboto Mono",monospace;font-size:26px;font-weight:700;line-height:1;}
+  .side-cell .label{font-size:11px;color:var(--muted);margin-top:6px;letter-spacing:0.04em;user-select:none;}
+  .side-cell.overdue .num{color:var(--stamp);}
+  .side-cell.soon .num{color:var(--amber);}
+  .side-cell.ok .num{color:var(--seal-green);}
+
+  .summary-detail{border:1px solid var(--line);background:var(--paper-raise);padding:12px 16px;margin:-14px 0 22px;}
+  .summary-detail-head{font-family:"Noto Serif KR",serif;font-weight:700;font-size:13px;color:var(--ink);margin-bottom:8px;}
+  .summary-detail-list{display:flex;flex-direction:column;}
+  .summary-detail-item{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:12.5px;padding:6px 0;border-bottom:1px dashed var(--line-soft);}
+  .summary-detail-item:last-child{border-bottom:none;}
+  .sdi-name{flex:1;color:var(--ink);min-width:0;}
+  .sdi-date{color:var(--muted);font-size:11px;flex-shrink:0;}
+  .summary-detail-empty{font-size:12px;color:var(--muted);}
+
+  .hero-dday{margin:18px 0 0;}
+  .hero-dday-head{font-family:"Noto Serif KR",serif;font-weight:700;font-size:13px;color:var(--muted);margin-bottom:8px;letter-spacing:0.04em;}
+  .hero-dday-list{display:flex;gap:10px;flex-wrap:wrap;}
+  .hero-card{flex:1;min-width:150px;border:1px solid var(--line);background:var(--paper-raise);padding:14px 16px;display:flex;flex-direction:column;gap:6px;}
+  .hero-card .hc-name{font-size:12.5px;color:var(--ink-soft);font-weight:600;line-height:1.3;}
+  .hero-card .hc-stage{font-size:10px;color:var(--muted);letter-spacing:0.03em;}
+  .hero-card .hc-dday{font-family:"Roboto Mono",monospace;font-size:32px;font-weight:700;line-height:1;}
+  .hero-card .hc-date{font-size:11px;color:var(--muted);}
+  .hero-card.overdue .hc-dday{color:var(--stamp);}
+  .hero-card.today .hc-dday{color:var(--stamp-bright);}
+  .hero-card.soon .hc-dday{color:var(--amber);}
+  .hero-card.normal .hc-dday{color:var(--ink-soft);}
+  .hero-card.done .hc-dday{color:var(--seal-green);}
+  .hero-empty{font-size:12px;color:var(--muted);padding:10px 2px;}
+
+  .month-due-box{
+    border:1px solid var(--line);background:var(--paper-raise);padding:14px 16px;margin:18px 0 0;
+  }
+  .month-due-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;}
+  .month-due-head .mdh-title{font-family:"Noto Serif KR",serif;font-weight:700;font-size:14px;}
+  .month-due-head .mdh-count{font-family:"Roboto Mono",monospace;font-size:26px;font-weight:700;color:var(--stamp);}
+  .month-due-head .mdh-sub{font-size:11px;color:var(--muted);}
+  .month-due-list{margin-top:10px;display:flex;flex-direction:column;}
+  .mdl-item{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12.5px;padding:6px 0;border-bottom:1px dashed var(--line-soft);}
+  .mdl-item:last-child{border-bottom:none;}
+  .mdl-name{flex:1;min-width:0;}
+  .mdl-date{color:var(--muted);font-size:11px;flex-shrink:0;}
+
+  .compliance-box{border:1px solid var(--line);background:var(--paper-raise);padding:14px 16px;margin:18px 0 0;}
+  .compliance-head{font-family:"Noto Serif KR",serif;font-weight:700;font-size:14px;margin-bottom:10px;}
+  .compliance-stats{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px;}
+  .cstat{flex:1;min-width:110px;border:1px solid var(--line-soft);background:#fff;padding:10px 12px;}
+  .cstat .cnum{font-family:"Roboto Mono",monospace;font-size:22px;font-weight:700;}
+  .cstat .clabel{font-size:10.5px;color:var(--muted);margin-top:3px;}
+  .cstat.rate .cnum{color:var(--seal-green);}
+  .cstat.late .cnum{color:var(--stamp);}
+  .compliance-table{width:100%;border-collapse:collapse;font-size:12px;}
+  .compliance-table th, .compliance-table td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line-soft);}
+  .compliance-table th{color:var(--muted);font-weight:600;font-size:11px;}
+  .compliance-table td.num{font-family:"Roboto Mono",monospace;text-align:right;}
+  .compliance-empty{font-size:12px;color:var(--muted);}
+
+  @media(max-width:640px){
+    .overview-row{flex-direction:column;}
+    .summary-side{flex-direction:row;width:100%;}
+    .cal-item-chip{font-size:8.5px;}
+    .hero-card{min-width:120px;padding:12px 12px;}
+    .hero-card .hc-dday{font-size:24px;}
+  }
+
+  .view-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;}
+  .vt-nav{display:flex;align-items:center;gap:10px;}
+  .vt-label{font-family:"Noto Serif KR",serif;font-weight:700;font-size:16px;min-width:110px;text-align:center;}
+  .vt-btn{background:none;border:1px solid var(--line);color:var(--ink-soft);font-family:inherit;font-size:12px;padding:5px 10px;cursor:pointer;border-radius:var(--radius);}
+  .vt-btn:hover{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .vt-mode{border-color:var(--ink);color:var(--ink);font-weight:600;}
+  .month-group-label{font-family:"Roboto Mono",monospace;font-size:11px;color:var(--muted);padding:10px 4px 4px;border-top:1px dashed var(--line-soft);}
+  .month-group-label:first-child{border-top:none;}
+
+  section.block{margin-bottom:36px;}
+  .block-head{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--ink);padding-bottom:8px;margin-bottom:2px;}
+  .block-head h2{font-family:"Noto Serif KR",serif;font-size:16px;font-weight:700;margin:0;display:flex;align-items:center;gap:8px;}
+  .block-head h2::before{content:"";display:inline-block;width:5px;height:16px;background:var(--stamp);}
+  .btn-add{font-size:12px;background:none;border:1px solid var(--ink);color:var(--ink);padding:5px 10px;cursor:pointer;font-family:inherit;border-radius:var(--radius);}
+  .btn-add:hover{background:var(--ink);color:var(--paper-raise);}
+
+  .tag-filter{display:flex;gap:6px;margin:10px 0 4px;flex-wrap:wrap;}
+  .tag-chip{font-family:inherit;font-size:11px;padding:4px 10px;border:1px solid var(--line);background:none;color:var(--muted);cursor:pointer;border-radius:12px;}
+  .tag-chip.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .tag-chip.tag-transfer.active{background:var(--stamp);border-color:var(--stamp);}
+  .tag-chip.tag-inherit.active{background:var(--ink);border-color:var(--ink);}
+  .tag-chip.tag-gift.active{background:var(--amber);border-color:var(--amber);}
+  .tag-chip.tag-stock.active{background:#2E6DA4;border-color:#2E6DA4;}
+  .tag-chip.tag-dividend.active{background:#2F7D6E;border-color:#2F7D6E;}
+  .tag-chip.tag-capital.active{background:#5B4B8A;border-color:#5B4B8A;}
+  .tag-chip.tag-etc.active{background:var(--muted);border-color:var(--muted);}
+
+  .row{display:grid;grid-template-columns:1fr auto auto auto 42px;gap:10px;align-items:center;padding:11px 4px;border-bottom:1px solid var(--line-soft);font-size:13.5px;}
+  .row:hover{background:rgba(0,0,0,0.02);}
+  .row .name{font-weight:600;}
+  .row .rule{color:var(--muted);font-size:12px;}
+  .row .dates{font-family:"Roboto Mono",monospace;font-size:12px;color:var(--ink-soft);text-align:right;white-space:nowrap;}
+  .dday{font-family:"Roboto Mono",monospace;font-weight:700;font-size:13px;padding:3px 9px;border-radius:12px;text-align:center;min-width:58px;white-space:nowrap;}
+  .dday.overdue{background:var(--stamp);color:#fff;}
+  .dday.today{background:var(--stamp-bright);color:#fff;}
+  .dday.soon{background:#F4E3C6;color:var(--amber);border:1px solid var(--amber);}
+  .dday.normal{background:#E9E7DC;color:var(--ink-soft);}
+  .dday.done{background:var(--seal-green);color:#fff;}
+
+  .check-wrap{position:relative;width:38px;height:38px;display:flex;align-items:center;justify-content:center;}
+  .check-wrap input{width:22px;height:22px;cursor:pointer;accent-color:var(--seal-green);}
+
+  .stamp{
+    position:absolute;pointer-events:none;width:52px;height:52px;border:3px solid var(--stamp);border-radius:50%;
+    color:var(--stamp);display:flex;align-items:center;justify-content:center;font-family:"Noto Serif KR",serif;
+    font-weight:900;font-size:13px;transform:rotate(-11deg) scale(1.8);opacity:0;top:-7px;left:-7px;
+    background:radial-gradient(circle, rgba(178,58,47,0.06), transparent 70%);mix-blend-mode:multiply;
+  }
+  @keyframes stampIn{
+    0%{opacity:0;transform:rotate(-11deg) scale(2.4);}
+    55%{opacity:1;transform:rotate(-11deg) scale(0.85);}
+    75%{transform:rotate(-11deg) scale(1.08);}
+    100%{opacity:1;transform:rotate(-11deg) scale(1);}
+  }
+  .stamp.play{animation:stampIn 0.45s ease-out forwards;}
+
+  .empty{color:var(--muted);font-size:13px;padding:18px 4px;text-align:center;border:1px dashed var(--line);}
+  .memo{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.6;}
+  .legal-note{
+    font-size:11px;color:var(--ink-soft);background:#EFEDE2;border:1px solid var(--line-soft);
+    padding:8px 10px;margin-top:6px;border-radius:var(--radius);line-height:1.5;display:none;
+  }
+  .legal-note.show{display:block;}
+  .field-group-label{
+    flex-basis:100%;font-family:"Noto Serif KR",serif;font-weight:700;font-size:12.5px;color:var(--ink);
+    padding:6px 0 0;border-top:1px dashed var(--line-soft);margin-top:4px;
+  }
+  .field-group-label:first-child{border-top:none;margin-top:0;padding-top:0;}
+
+  .gcal-links{margin-top:4px;display:flex;gap:10px;flex-wrap:wrap;}
+  .gcal-link{background:none;border:none;padding:0;font-family:inherit;font-size:11px;color:var(--seal-green);cursor:pointer;text-decoration:underline;}
+  .gcal-link:hover{color:var(--ink);}
+
+  .req-row{display:flex;align-items:flex-start;gap:14px;padding:11px 4px;border-bottom:1px solid var(--line-soft);}
+  .req-cat{display:inline-block;font-family:"Roboto Mono",monospace;font-size:9.5px;font-weight:700;padding:1px 6px;margin-right:6px;border-radius:2px;letter-spacing:0.02em;vertical-align:middle;}
+  .req-cat.cat-transfer{background:#F1D9D5;color:var(--stamp);}
+  .req-cat.cat-inherit{background:#DCE1EA;color:var(--ink);}
+  .req-cat.cat-gift{background:#F4E3C6;color:var(--amber);}
+  .req-cat.cat-stock{background:#D8E8F5;color:#2E6DA4;}
+  .req-cat.cat-dividend{background:#D7ECE8;color:#2F7D6E;}
+  .req-cat.cat-capital{background:#E3DEF0;color:#5B4B8A;}
+  .req-cat.cat-etc{background:#E9E7DC;color:var(--muted);}
+  .req-task{font-size:12px;color:var(--ink-soft);margin-top:2px;white-space:pre-line;line-height:1.4;}
+  .req-row:hover{background:rgba(0,0,0,0.02);}
+  .req-main{flex:1;min-width:0;}
+  .req-dates{display:flex;flex-direction:column;gap:4px;min-width:180px;padding-top:2px;}
+  .req-date-line{display:flex;align-items:center;gap:7px;}
+  .req-date-label{font-size:10px;color:var(--muted);width:40px;flex-shrink:0;font-family:"Roboto Mono",monospace;}
+  .req-date-line .dates{font-size:11px;min-width:40px;}
+  .req-date-line .dday{min-width:48px;font-size:10.5px;padding:2px 6px;}
+
+  .del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;line-height:1;padding:4px;}
+  .del:hover{color:var(--stamp);}
+
+  .panel{display:none;background:var(--paper-raise);border:1px solid var(--line);padding:16px;margin:10px 0 18px;}
+  .panel.open{display:block;}
+  .panel .fields{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;}
+  .panel label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px;}
+  .panel input[type=text], .panel input[type=date], .panel input[type=number], .panel select{
+    font-family:inherit;font-size:13px;padding:7px 8px;border:1px solid var(--line);background:#fff;border-radius:var(--radius);
+  }
+  .panel .day-opts{display:flex;gap:8px;align-items:center;}
+  .panel-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .btn-primary{background:var(--ink);color:#fff;border:none;padding:8px 16px;font-size:12px;cursor:pointer;font-family:inherit;border-radius:var(--radius);}
+  .btn-ghost{background:none;border:1px solid var(--line);padding:8px 16px;font-size:12px;cursor:pointer;font-family:inherit;color:var(--muted);border-radius:var(--radius);}
+  .btn-calc{background:#EFEDE2;border:1px solid var(--ink-soft);color:var(--ink-soft);padding:8px 12px;font-size:12px;cursor:pointer;font-family:inherit;border-radius:var(--radius);}
+  .btn-calc:hover{background:var(--ink-soft);color:#fff;}
+  .btn-calc:disabled{opacity:0.4;cursor:not-allowed;}
+  .btn-calc:disabled:hover{background:#EFEDE2;color:var(--ink-soft);}
+
+  .done-toggle{font-size:11px;color:var(--muted);text-decoration:underline;cursor:pointer;background:none;border:none;font-family:inherit;padding:0;margin-top:6px;}
+  .done-list{opacity:0.55;}
+  .done-list .row .name{text-decoration:line-through;}
+
+  .legend{border:1px solid var(--line);background:var(--paper-raise);padding:12px 14px;margin:10px 0 18px;font-size:11.5px;color:var(--ink-soft);line-height:1.7;}
+  .legend b{color:var(--ink);}
+
+  footer.util{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding-top:14px;margin-top:10px;font-size:11px;color:var(--muted);flex-wrap:wrap;gap:8px;}
+  footer.util button{background:none;border:1px solid var(--line);color:var(--muted);padding:5px 10px;cursor:pointer;font-family:inherit;font-size:11px;border-radius:var(--radius);margin-left:6px;}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;font-size:12px;border-radius:var(--radius);opacity:0;transition:opacity 0.3s;pointer-events:none;}
+  .toast.show{opacity:1;}
+
+  @media(max-width:640px){
+    .row{grid-template-columns:1fr auto 42px;}
+    .row .rule{display:none;}
+    .req-row{flex-wrap:wrap;}
+    .req-row .rule{display:none;}
+    .req-dates{min-width:0;}
+    .letterhead{flex-direction:column;align-items:flex-start;gap:8px;}
+    .letterhead .today{text-align:left;}
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <div class="letterhead">
+    <div>
+      <div class="brand">taxmancall <span>·</span> 자본거래·상속증여 신고관리대장</div>
+      <div class="doc-tag">CAPITAL TRANSACTION / INHERITANCE·GIFT FILING LEDGER — 원제우세무사사무소</div>
+    </div>
+    <div class="today">
+      <div class="d mono" id="todayDate">-</div>
+      <div id="todayWeekday">-</div>
+    </div>
+  </div>
+
+  <div class="view-toolbar">
+    <div class="vt-nav">
+      <button class="vt-btn" onclick="stepPeriod(-1)">◀</button>
+      <span class="vt-label" id="periodLabel">-</span>
+      <button class="vt-btn" onclick="stepPeriod(1)">▶</button>
+      <button class="vt-btn vt-today" onclick="goToday()">오늘</button>
+    </div>
+    <button class="vt-btn vt-mode" id="modeToggleBtn" onclick="toggleViewMode()">연간보기</button>
+  </div>
+
+  <div class="hero-dday" id="heroDday">
+    <div class="hero-dday-head">지금 챙겨야 할 건 TOP 6 (다음 처리 단계 기준, 완료 제외)</div>
+    <div class="hero-dday-list" id="heroDdayList"></div>
+  </div>
+
+  <div class="month-due-box">
+    <div class="month-due-head">
+      <span class="mdh-title">이번달 신고 마감 대상</span>
+      <span class="mdh-count mono" id="monthDueCount">0</span>
+      <span class="mdh-sub">건 · <span id="monthDueSub"></span></span>
+    </div>
+    <div class="month-due-list" id="monthDueList"></div>
+  </div>
+
+  <div class="overview-row" id="overviewRow">
+    <div class="calendar-box" id="calendarBox">
+      <div class="calendar-weekdays">
+        <div class="wd sun">일</div><div class="wd">월</div><div class="wd">화</div><div class="wd">수</div><div class="wd">목</div><div class="wd">금</div><div class="wd sat">토</div>
+      </div>
+      <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
+    <div class="summary-side">
+      <div class="side-cell overdue" id="cellOverdue" onclick="toggleSummaryDetail('overdue')"><div class="num mono" id="cntOverdue">0</div><div class="label">기한초과 ▾</div></div>
+      <div class="side-cell soon" id="cellSoon" onclick="toggleSummaryDetail('soon')"><div class="num mono" id="cntSoon">0</div><div class="label">3일 이내 ▾</div></div>
+      <div class="side-cell ok" id="cellOk" onclick="toggleSummaryDetail('ok')"><div class="num mono" id="cntOk">0</div><div class="label">진행중 ▾</div></div>
+    </div>
+  </div>
+
+  <div class="summary-detail" id="summaryDetail" style="display:none;">
+    <div class="summary-detail-head" id="summaryDetailHead"></div>
+    <div class="summary-detail-list" id="summaryDetailList"></div>
+  </div>
+
+  <div class="compliance-box">
+    <div class="compliance-head">처리기한 준수 현황 (완료 건 기준 · 법정신고기한 대비)</div>
+    <div class="compliance-stats">
+      <div class="cstat"><div class="cnum mono" id="compTotal">0</div><div class="clabel">완료 건수</div></div>
+      <div class="cstat rate"><div class="cnum mono" id="compOnTime">0</div><div class="clabel">기한 준수</div></div>
+      <div class="cstat late"><div class="cnum mono" id="compLate">0</div><div class="clabel">기한 초과 완료</div></div>
+      <div class="cstat rate"><div class="cnum mono" id="compRate">-</div><div class="clabel">준수율</div></div>
+    </div>
+    <table class="compliance-table" id="compTable">
+      <thead><tr><th>담당자</th><th class="num" style="text-align:right;">완료</th><th class="num" style="text-align:right;">준수</th><th class="num" style="text-align:right;">준수율</th></tr></thead>
+      <tbody id="compTableBody"></tbody>
+    </table>
+  </div>
+
+  <section class="block">
+    <div class="block-head" style="margin-top:36px;">
+      <h2>사업외 자산거래 신고 처리기한</h2>
+      <button class="btn-add" onclick="togglePanel('panelReq')">+ 건 추가</button>
+    </div>
+    <div class="tag-filter" id="catFilter"></div>
+    <div class="tag-filter" id="staffFilter"></div>
+
+    <div class="panel" id="panelReq">
+      <div class="fields">
+        <div class="field-group-label">기본 정보</div>
+        <div>
+          <label>담당직원</label>
+          <select id="qStaff">
+            <option value="">담당자 선택</option>
+            <option value="임채연">임채연</option>
+            <option value="임민지">임민지</option>
+            <option value="최민정">최민정</option>
+            <option value="김연주">김연주</option>
+            <option value="세무사">세무사</option>
+          </select>
+        </div>
+        <div>
+          <label>구분</label>
+          <select id="qCategory" onchange="onCategoryChange()">
+            <option value="양도">양도(양도소득세)</option>
+            <option value="상속">상속(상속세)</option>
+            <option value="증여">증여(증여세)</option>
+            <option value="주식평가">주식평가(비상장주식 등)</option>
+            <option value="배당">배당(배당소득)</option>
+            <option value="자본거래">자본거래(증자·감자 등 증여의제)</option>
+            <option value="기타" selected>기타</option>
+          </select>
+        </div>
+        <div id="qAssetTypeWrap" style="display:none;">
+          <label>자산유형(양도)</label>
+          <select id="qAssetType">
+            <option value="realestate">부동산 등</option>
+            <option value="stock">주식 등</option>
+          </select>
+        </div>
+        <div id="qNonResidentWrap" style="display:none;">
+          <label>비거주자 여부(상속)</label>
+          <div class="day-opts" style="padding-top:7px;">
+            <label style="border:1px solid var(--line);padding:5px 8px;font-size:12px;cursor:pointer;background:#fff;"><input type="checkbox" id="qNonResident"> 피상속인/상속인 전원 비거주자</label>
+          </div>
+        </div>
+        <div>
+          <label>거래처명/의뢰인명</label>
+          <input type="text" id="qClient" placeholder="이름 또는 거래처명 입력">
+        </div>
+        <div>
+          <label>연락처</label>
+          <input type="text" id="qPhone" placeholder="010-0000-0000" maxlength="13" oninput="formatPhoneInput(this)">
+        </div>
+
+        <div class="field-group-label">① 법정신고기한 (기준일로 자동계산 가능)</div>
+        <div>
+          <label>기준일(양도일·상속개시일·증여일 등)</label>
+          <input type="date" id="qBaseDate" onchange="autofillStatutoryFromBase()">
+        </div>
+        <div>
+          <label>법정신고기한</label>
+          <input type="date" id="qStatutory" onchange="autofillScheduleIfEmpty()">
+        </div>
+        <div style="align-self:flex-end;">
+          <button class="btn-calc" id="qCalcBtn" onclick="applyCalcStatutory()">⚖ 법정신고기한 자동계산(덮어쓰기)</button>
+        </div>
+
+        <div class="field-group-label">② 내부 처리 일정 (미팅일·법정신고기한 입력 시 자동 배분, 개별 수정 가능)</div>
+        <div>
+          <label>미팅일</label>
+          <input type="date" id="qMeeting" onchange="autofillScheduleIfEmpty()">
+        </div>
+        <div>
+          <label>자료정리기한</label>
+          <input type="date" id="qDocs">
+        </div>
+        <div>
+          <label>1차보고기한</label>
+          <input type="date" id="qReport">
+        </div>
+        <div>
+          <label>1차마감기한</label>
+          <input type="date" id="qClose">
+        </div>
+        <div style="align-self:flex-end;">
+          <button class="btn-calc" id="qScheduleBtn" onclick="forceDistributeSchedule()">📅 내부일정 자동배분(덮어쓰기)</button>
+        </div>
+
+        <div style="flex:1;min-width:260px;">
+          <label>의뢰 내용 (상세히)</label>
+          <textarea id="qTask" rows="3" style="width:100%;font-family:inherit;font-size:13px;padding:8px;border:1px solid var(--line);resize:vertical;"></textarea>
+        </div>
+      </div>
+      <div class="legal-note" id="qCalcNote"></div>
+      <div class="legal-note" id="qScheduleNote"></div>
+      <div class="panel-actions">
+        <button class="btn-primary" onclick="addRequest()">등록</button>
+        <button class="btn-ghost" onclick="togglePanel('panelReq')">취소</button>
+      </div>
+    </div>
+
+    <div class="legend">
+      <b>법정신고기한 자동계산 근거(참고용, 최종 확인은 홈택스·국세청 자료로 하세요)</b><br>
+      · 양도(부동산 등) : 양도일이 속하는 달의 말일부터 2개월 — 소득세법 §105①1호<br>
+      · 양도(주식 등) : 양도일이 속하는 반기의 말일부터 2개월 — 소득세법 §105①2호<br>
+      · 상속 : 상속개시일이 속하는 달의 말일부터 6개월(비거주자 관련 시 9개월) — 상속세및증여세법 §67①<br>
+      · 증여 : 증여일이 속하는 달의 말일부터 3개월 — 상속세및증여세법 §68①<br>
+      · 자본거래(증자·감자 등 증여의제) : 이익을 받은 것으로 보는 날이 속하는 달의 말일부터 3개월 — 상속세및증여세법 §68①(§39~§42의3 등 개별 증여의제 규정)<br>
+      · 신고기한 말일이 토요일·공휴일이면 그 다음날로 연장 — 국세기본법 §5① (공휴일 데이터는 미반영, 재확인 필요)<br>
+      · 주식평가·배당·기타는 별도 법정신고기한이 정형화되어 있지 않아 자동계산을 지원하지 않습니다.<br>
+      <b>내부 일정(자료정리·1차보고·1차마감) 자동배분은 법적 근거가 아니라 사무소 내부 업무관리를 위한 참고용 분배(미팅일~법정신고기한 구간의 약 25%/55%/88% 지점)이며, 언제든 직접 수정할 수 있습니다.</b>
+    </div>
+
+    <div id="reqList"></div>
+    <div class="memo">※ 법정신고기한은 실제 사정에 맞춰 직접 입력하거나 자동계산 결과를 검토 후 확정하세요(최종 기준은 홈택스·국세청 자료). 이 목록은 to-do 방식으로, 월/연 이동과 무관하게 완료 체크 전까지 계속 표시됩니다.</div>
+    <button class="done-toggle" id="toggleDoneBtn" onclick="toggleDoneView()">완료된 건 보기</button>
+    <div id="reqDoneList" class="done-list" style="display:none;"></div>
+  </section>
+
+  <footer class="util">
+    <span>브라우저(이 PC)에 저장됩니다 · 각 항목의 🗓 링크로 구글 캘린더에 등록하세요<span id="cloudStatusNote"></span></span>
+    <span>
+      <button onclick="requestNotifyPermission()">알림 켜기</button>
+      <button onclick="exportData()">내보내기</button>
+      <button onclick="document.getElementById('importFile').click()">불러오기</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importData(event)">
+      <button onclick="cloudLoadRequests()" id="syncBtn" style="display:none;">🔄 동기화</button>
+      <button onclick="resetSheetPassword()" id="pwBtn" style="display:none;">🔒 비밀번호 변경</button>
+    </span>
+  </footer>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- 상태 ----------
+   기존 "기한관리대장(사업)" 앱과는 완전히 별도의 저장키를 사용합니다.
+   두 앱은 서로 다른 브라우저 저장공간(localStorage)을 사용하므로 데이터가 섞이지 않습니다. */
+const STORAGE_KEY = 'taxmancall_capital_deadline_v2';
+
+/* ================================================================
+   구글 시트 연동(선택, 사무실 공용 공유용) — 기본은 비활성화 상태입니다.
+   기존 "기한관리대장(사업)" 앱과 동일한 시트를 재사용하면 데이터가
+   섞이므로, 반드시 이 대장 전용의 별도 구글 시트/Apps Script 배포를
+   새로 만들어 아래 GAS_URL에 연결하세요. 비워두면 이 PC 로컬 저장만 사용합니다.
+   ================================================================ */
+const GAS_URL = ''; // 예: 'https://script.google.com/macros/s/AKfycb.../exec' (전용 시트로 별도 배포)
+const SHEET_PW_KEY = 'taxmancall_capital_sheet_pw';
+
+function cloudEnabled(){ return !!GAS_URL; }
+
+function getSheetPassword(promptIfMissing){
+  let pw = localStorage.getItem(SHEET_PW_KEY);
+  if(!pw && promptIfMissing){
+    pw = window.prompt('사무실 공용 비밀번호를 입력하세요 (구글 시트 연동)');
+    if(pw) localStorage.setItem(SHEET_PW_KEY, pw);
+  }
+  return pw || '';
+}
+function resetSheetPassword(){
+  localStorage.removeItem(SHEET_PW_KEY);
+  toast('비밀번호를 다시 입력해주세요.');
+  cloudLoadRequests();
+}
+
+async function cloudLoadRequests(){
+  if(!cloudEnabled()) return;
+  const pw = getSheetPassword(true);
+  if(!pw) return;
+  try{
+    const res = await fetch(`${GAS_URL}?password=${encodeURIComponent(pw)}`);
+    const json = await res.json();
+    if(!json.ok){
+      toast('구글 시트 연동 실패: ' + (json.error || '비밀번호를 확인해주세요.'));
+      if(/비밀번호/.test(json.error || '')) localStorage.removeItem(SHEET_PW_KEY);
+      return;
+    }
+    state.requests = json.data || [];
+    saveState();
+    render();
+    toast('구글 시트에서 목록을 불러왔습니다.');
+  }catch(err){
+    toast('구글 시트 연결에 실패했습니다. 이 PC에 저장된 내용으로 표시합니다.');
+  }
+}
+
+async function cloudSaveRequests(){
+  if(!cloudEnabled()) return;
+  const pw = getSheetPassword(false);
+  if(!pw) return;
+  try{
+    const res = await fetch(GAS_URL, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ password: pw, data: state.requests })
+    });
+    const json = await res.json();
+    if(!json.ok){
+      toast('구글 시트 저장 실패: ' + (json.error || '비밀번호를 확인해주세요.'));
+    }
+  }catch(err){
+    toast('구글 시트 저장에 실패했습니다. 네트워크를 확인해주세요.');
+  }
+}
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return { requests: [] };
+}
+let state = loadState();
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+/* ---------- 날짜 유틸 ---------- */
+function todayDate(){ const d = new Date(); d.setHours(0,0,0,0); return d; }
+function fmt(d){ return d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0'); }
+function fmtShort(d){ return String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0'); }
+function dateKey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function lastDayOfMonth(y,m){ return new Date(y, m+1, 0).getDate(); }
+function addDays(d,n){ const r=new Date(d); r.setDate(r.getDate()+n); return r; }
+
+/* 실제 법정기한 계산용(엄격 버전): 월/연 경계를 넘어가도 정상적으로 다음 영업일로 이월.
+   국세기본법 §5①(신고기한 말일이 공휴일·토요일인 경우 그 다음날을 기한으로 함) 근거.
+   ※ 법정공휴일 데이터는 포함하지 않으므로 최종 확인은 홈택스·국세청 공지로 하세요. */
+function adjustForWeekendStrict(date){
+  const wd = date.getDay();
+  if(wd === 6) return addDays(date, 2);
+  if(wd === 0) return addDays(date, 1);
+  return date;
+}
+
+/* ---------- 법정신고기한 자동계산(참고용) ---------- */
+function shiftToMonthEndPlus(monthEndDate, n){
+  const y = monthEndDate.getFullYear();
+  const m = monthEndDate.getMonth();
+  return new Date(y, m + 1 + n, 0);
+}
+
+function computeStatutoryDeadline(category, baseDateStr, opts){
+  if(!baseDateStr) return null;
+  opts = opts || {};
+  const base = new Date(baseDateStr+'T00:00:00');
+  const monthEndOfBase = new Date(base.getFullYear(), base.getMonth()+1, 0);
+
+  if(category === '양도'){
+    if(opts.assetType === 'stock'){
+      const isFirstHalf = (base.getMonth()+1) <= 6;
+      const halfEndMonth = isFirstHalf ? 6 : 12;
+      const halfEnd = new Date(base.getFullYear(), halfEndMonth, 0);
+      const deadline = shiftToMonthEndPlus(halfEnd, 2);
+      return { date: adjustForWeekendStrict(deadline), note: '양도소득세 예정신고(주식 등): 양도일이 속하는 반기의 말일부터 2개월 (소득세법 §105①2호)' };
+    }
+    const deadline = shiftToMonthEndPlus(monthEndOfBase, 2);
+    return { date: adjustForWeekendStrict(deadline), note: '양도소득세 예정신고(부동산 등): 양도일이 속하는 달의 말일부터 2개월 (소득세법 §105①1호)' };
+  }
+  if(category === '상속'){
+    const months = opts.nonResident ? 9 : 6;
+    const deadline = shiftToMonthEndPlus(monthEndOfBase, months);
+    return { date: adjustForWeekendStrict(deadline), note: `상속세 신고: 상속개시일이 속하는 달의 말일부터 ${months}개월 (상속세및증여세법 §67①${opts.nonResident ? ' 단서 — 피상속인 또는 상속인 전원이 비거주자인 경우' : ''})` };
+  }
+  if(category === '증여'){
+    const deadline = shiftToMonthEndPlus(monthEndOfBase, 3);
+    return { date: adjustForWeekendStrict(deadline), note: '증여세 신고: 증여일이 속하는 달의 말일부터 3개월 (상속세및증여세법 §68①)' };
+  }
+  if(category === '자본거래'){
+    const deadline = shiftToMonthEndPlus(monthEndOfBase, 3);
+    return { date: adjustForWeekendStrict(deadline), note: '자본거래 증여의제이익 신고: 이익을 받은 것으로 보는 날이 속하는 달의 말일부터 3개월 (상속세및증여세법 §68①, §39~§42의3 등 개별 증여의제 규정)' };
+  }
+  return null; // 주식평가 / 배당 / 기타는 자동계산 미지원
+}
+
+function onCategoryChange(){
+  const cat = document.getElementById('qCategory').value;
+  document.getElementById('qAssetTypeWrap').style.display = (cat === '양도') ? '' : 'none';
+  document.getElementById('qNonResidentWrap').style.display = (cat === '상속') ? '' : 'none';
+  const calcBtn = document.getElementById('qCalcBtn');
+  const supported = ['양도','상속','증여','자본거래'].includes(cat);
+  calcBtn.disabled = !supported;
+  calcBtn.title = supported ? '' : '주식평가·배당·기타는 자동계산을 지원하지 않습니다. 직접 입력하세요.';
+  document.getElementById('qCalcNote').classList.remove('show');
+}
+
+function applyCalcStatutory(){
+  const cat = document.getElementById('qCategory').value;
+  const baseDateVal = document.getElementById('qBaseDate').value;
+  if(!baseDateVal){ toast('기준일(양도일·상속개시일·증여일 등)을 먼저 입력해 주세요.'); return; }
+  const opts = { assetType: document.getElementById('qAssetType').value, nonResident: document.getElementById('qNonResident').checked };
+  const result = computeStatutoryDeadline(cat, baseDateVal, opts);
+  const noteEl = document.getElementById('qCalcNote');
+  if(!result){
+    noteEl.textContent = '이 구분은 자동계산을 지원하지 않습니다. 홈택스·국세청 자료를 확인하여 직접 입력하세요.';
+    noteEl.classList.add('show');
+    return;
+  }
+  document.getElementById('qStatutory').value = dateKey(result.date);
+  noteEl.textContent = '⚖ 자동계산(참고): ' + result.note + ' → ' + fmt(result.date) + ' · 반드시 홈택스·국세청 자료로 최종 확인하세요.';
+  noteEl.classList.add('show');
+  autofillScheduleIfEmpty();
+}
+
+/* 기준일만 입력되고 법정신고기한이 비어있을 때 자동으로(조용히) 채워줌 — 값이 이미 있으면 덮어쓰지 않음 */
+function autofillStatutoryFromBase(){
+  const statutoryEl = document.getElementById('qStatutory');
+  if(statutoryEl.value) return; // 이미 값이 있으면 자동으로 덮어쓰지 않음(직접 입력 존중)
+  const cat = document.getElementById('qCategory').value;
+  const baseDateVal = document.getElementById('qBaseDate').value;
+  if(!baseDateVal) return;
+  const opts = { assetType: document.getElementById('qAssetType').value, nonResident: document.getElementById('qNonResident').checked };
+  const result = computeStatutoryDeadline(cat, baseDateVal, opts);
+  if(!result) return;
+  statutoryEl.value = dateKey(result.date);
+  const noteEl = document.getElementById('qCalcNote');
+  noteEl.textContent = '⚖ 자동계산(참고): ' + result.note + ' → ' + fmt(result.date) + ' · 반드시 홈택스·국세청 자료로 최종 확인하세요.';
+  noteEl.classList.add('show');
+  autofillScheduleIfEmpty();
+}
+
+/* ---------- 내부 처리일정 자동배분(참고용) ----------
+   미팅일(M)~법정신고기한(S) 구간을 약 25% / 55% / 88% 지점으로 나누어
+   자료정리기한 / 1차보고기한 / 1차마감기한을 제안합니다.
+   법적 근거가 아니라 사무소 내부 업무관리를 위한 참고 배분이며, 각 항목은
+   언제든 개별적으로 직접 수정(선택입력)할 수 있습니다. */
+function distributeSchedule(meetingStr, statutoryStr){
+  if(!meetingStr || !statutoryStr) return null;
+  const M = new Date(meetingStr+'T00:00:00');
+  const S = new Date(statutoryStr+'T00:00:00');
+  const totalDays = Math.round((S-M)/86400000);
+  if(totalDays <= 0) return null;
+  const clampOffset = (n) => Math.max(1, Math.min(totalDays-1, n));
+
+  let docsOffset = clampOffset(Math.round(totalDays*0.25));
+  let reportOffset = clampOffset(Math.max(docsOffset+1, Math.round(totalDays*0.55)));
+  let closeOffset = clampOffset(Math.max(reportOffset+1, totalDays - Math.round(totalDays*0.12)));
+  if(reportOffset <= docsOffset) reportOffset = clampOffset(docsOffset+1);
+  if(closeOffset <= reportOffset) closeOffset = clampOffset(reportOffset+1);
+
+  const capBeforeS = (d) => (d >= S) ? addDays(S,-1) : d;
+  const docs = capBeforeS(adjustForWeekendStrict(addDays(M, docsOffset)));
+  const report = capBeforeS(adjustForWeekendStrict(addDays(M, reportOffset)));
+  const close = capBeforeS(adjustForWeekendStrict(addDays(M, closeOffset)));
+  return { docs, report, close };
+}
+
+/* 미팅일·법정신고기한이 모두 채워지면, 비어있는 자료정리/1차보고/1차마감 필드만 자동으로 채움(기존 입력값은 보존) */
+function autofillScheduleIfEmpty(){
+  const meetingVal = document.getElementById('qMeeting').value;
+  const statutoryVal = document.getElementById('qStatutory').value;
+  if(!meetingVal || !statutoryVal) return;
+  const result = distributeSchedule(meetingVal, statutoryVal);
+  const noteEl = document.getElementById('qScheduleNote');
+  if(!result){
+    noteEl.textContent = '미팅일이 법정신고기한보다 늦어 내부 일정을 자동배분할 수 없습니다. 날짜를 확인해 주세요.';
+    noteEl.classList.add('show');
+    return;
+  }
+  const docsEl = document.getElementById('qDocs');
+  const reportEl = document.getElementById('qReport');
+  const closeEl = document.getElementById('qClose');
+  if(!docsEl.value) docsEl.value = dateKey(result.docs);
+  if(!reportEl.value) reportEl.value = dateKey(result.report);
+  if(!closeEl.value) closeEl.value = dateKey(result.close);
+  noteEl.textContent = '📅 내부일정 자동배분(참고): 자료정리 ' + fmt(result.docs) + ' · 1차보고 ' + fmt(result.report) + ' · 1차마감 ' + fmt(result.close) + ' · 필요시 각 항목을 직접 수정하세요.';
+  noteEl.classList.add('show');
+}
+
+/* 버튼 클릭 시 기존 값과 무관하게 강제로 다시 계산해 덮어씀 */
+function forceDistributeSchedule(){
+  const meetingVal = document.getElementById('qMeeting').value;
+  const statutoryVal = document.getElementById('qStatutory').value;
+  if(!meetingVal || !statutoryVal){ toast('미팅일과 법정신고기한을 먼저 입력해 주세요.'); return; }
+  const result = distributeSchedule(meetingVal, statutoryVal);
+  const noteEl = document.getElementById('qScheduleNote');
+  if(!result){
+    noteEl.textContent = '미팅일이 법정신고기한보다 늦어 내부 일정을 자동배분할 수 없습니다. 날짜를 확인해 주세요.';
+    noteEl.classList.add('show');
+    return;
+  }
+  document.getElementById('qDocs').value = dateKey(result.docs);
+  document.getElementById('qReport').value = dateKey(result.report);
+  document.getElementById('qClose').value = dateKey(result.close);
+  noteEl.textContent = '📅 내부일정 자동배분(참고, 덮어씀): 자료정리 ' + fmt(result.docs) + ' · 1차보고 ' + fmt(result.report) + ' · 1차마감 ' + fmt(result.close) + ' · 필요시 각 항목을 직접 수정하세요.';
+  noteEl.classList.add('show');
+}
+
+/* ---------- 처리 단계(마일스톤) 정의 ---------- */
+const MILESTONE_DEFS = [
+  {key:'meetingDate', label:'미팅', chip:'meeting'},
+  {key:'docsDeadline', label:'자료정리', chip:'docs'},
+  {key:'reportDeadline', label:'1차보고', chip:'report'},
+  {key:'closeDeadline', label:'1차마감', chip:'close'},
+  {key:'statutory', label:'법정신고', chip:'statutory'}
+];
+/* 아직 완료되지 않은 케이스에서 "지금 챙겨야 할" 단계를 찾음: 오늘 이후(포함)인 첫 마일스톤,
+   전부 지났으면 마지막(법정신고)을 반환하여 기한초과로 표시되게 함 */
+function currentMilestoneKey(r){
+  const today = todayDate();
+  for(const def of MILESTONE_DEFS){
+    const val = r[def.key];
+    if(!val) continue;
+    if(new Date(val) >= today) return def.key;
+  }
+  return 'statutory';
+}
+function currentMilestone(r){
+  const key = currentMilestoneKey(r);
+  const def = MILESTONE_DEFS.find(d=>d.key===key);
+  const val = r[key] || r.statutory;
+  return { key, label: def.label, date: new Date(val) };
+}
+
+/* ---------- 뷰 상태 (월간 / 연간) ---------- */
+let viewMode = 'month';
+let viewDate = todayDate();
+let catFilterVal = 'all';
+const CAT_LIST = ['양도','상속','증여','주식평가','배당','자본거래','기타'];
+const CAT_CLASS = {'양도':'cat-transfer','상속':'cat-inherit','증여':'cat-gift','주식평가':'cat-stock','배당':'cat-dividend','자본거래':'cat-capital','기타':'cat-etc'};
+const CAT_TAGKEY = {'양도':'transfer','상속':'inherit','증여':'gift','주식평가':'stock','배당':'dividend','자본거래':'capital','기타':'etc'};
+const STAFF_LIST = ['임채연', '임민지', '최민정', '김연주', '세무사'];
+let staffFilter = 'all';
+
+function buildCatFilter(){
+  const wrap = document.getElementById('catFilter');
+  let html = `<button class="tag-chip${catFilterVal==='all'?' active':''}" onclick="setCatFilter('all')">전체</button>`;
+  CAT_LIST.forEach(c=>{
+    html += `<button class="tag-chip tag-${CAT_TAGKEY[c]}${catFilterVal===c?' active':''}" onclick="setCatFilter('${c}')">${c}</button>`;
+  });
+  wrap.innerHTML = html;
+}
+function setCatFilter(cat){ catFilterVal = cat; buildCatFilter(); renderRequestList(); }
+function buildStaffFilter(){
+  const wrap = document.getElementById('staffFilter');
+  let html = `<button class="tag-chip${staffFilter==='all'?' active':''}" onclick="setStaffFilter('all')">전체 담당</button>`;
+  STAFF_LIST.forEach(n=>{
+    html += `<button class="tag-chip${staffFilter===n?' active':''}" onclick="setStaffFilter('${n}')">${escapeHtml(n)}</button>`;
+  });
+  wrap.innerHTML = html;
+}
+function setStaffFilter(name){ staffFilter = name; buildStaffFilter(); renderRequestList(); }
+
+function stepPeriod(dir){
+  const d = new Date(viewDate);
+  if(viewMode === 'month') d.setMonth(d.getMonth() + dir);
+  else d.setFullYear(d.getFullYear() + dir);
+  viewDate = d;
+  render();
+}
+function goToday(){ viewDate = todayDate(); render(); }
+function toggleViewMode(){
+  viewMode = (viewMode === 'month') ? 'year' : 'month';
+  document.getElementById('modeToggleBtn').textContent = (viewMode === 'month') ? '연간보기' : '월간보기';
+  render();
+}
+function jumpToMonth(year, month){
+  viewDate = new Date(year, month-1, 1);
+  viewMode = 'month';
+  document.getElementById('modeToggleBtn').textContent = '연간보기';
+  render();
+}
+
+function ddayInfo(targetDate){
+  const today = todayDate();
+  const diff = Math.round((targetDate - today) / 86400000);
+  let cls = 'normal';
+  if(diff < 0) cls = 'overdue';
+  else if(diff === 0) cls = 'today';
+  else if(diff <= 3) cls = 'soon';
+  const label = diff === 0 ? 'D-DAY' : (diff > 0 ? 'D-'+diff : 'D+'+Math.abs(diff));
+  return {diff, cls, label};
+}
+
+/* ---------- 렌더 ---------- */
+function render(){
+  const today = todayDate();
+  document.getElementById('todayDate').textContent = fmt(today);
+  const wd = ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'][today.getDay()];
+  document.getElementById('todayWeekday').textContent = wd;
+
+  if(!Array.isArray(state.requests)) state.requests = [];
+
+  const y = viewDate.getFullYear(), m = viewDate.getMonth()+1;
+  document.getElementById('periodLabel').textContent = viewMode === 'month' ? `${y}년 ${m}월` : `${y}년`;
+
+  if(viewMode === 'month'){
+    document.getElementById('calendarBox').style.display = '';
+    buildCalendar(y, m);
+  } else {
+    document.getElementById('calendarBox').style.display = 'none';
+  }
+  renderRequestList();
+  renderDoneList();
+
+  try{
+    const counts = computeSummaryCounts();
+    document.getElementById('cntOverdue').textContent = counts.overdue;
+    document.getElementById('cntSoon').textContent = counts.soon;
+    document.getElementById('cntOk').textContent = counts.ok;
+    checkNotify(counts.overdue, counts.soon);
+  }catch(err){ console.error('요약 카운트 렌더링 오류:', err); }
+
+  try{ renderHeroDday(); }catch(err){ console.error('임박 신고기한 패널 렌더링 오류:', err); }
+  try{ renderSummaryDetail(); }catch(err){ console.error('요약 상세목록 렌더링 오류:', err); }
+  try{ renderMonthDueFilings(); }catch(err){ console.error('이번달 신고마감 패널 렌더링 오류:', err); }
+  try{ renderCompliance(); }catch(err){ console.error('처리기한 준수 현황 렌더링 오류:', err); }
+}
+
+function renderHeroDday(){
+  const listEl = document.getElementById('heroDdayList');
+  const cards = state.requests
+    .filter(r=>!r.done)
+    .map(r=>{
+      const cm = currentMilestone(r);
+      return { name: `${catBadgeText(r.category)}${r.client}`, stage: cm.label, date: cm.date, dd: ddayInfo(cm.date) };
+    })
+    .sort((a,b)=> a.dd.diff - b.dd.diff)
+    .slice(0,6);
+  if(cards.length === 0){
+    listEl.innerHTML = '<div class="hero-empty">등록된 건이 없습니다.</div>';
+    return;
+  }
+  listEl.innerHTML = cards.map(c => `
+    <div class="hero-card ${c.dd.cls}">
+      <div class="hc-name">${escapeHtml(c.name)}</div>
+      <div class="hc-stage">다음 단계: ${escapeHtml(c.stage)}</div>
+      <div class="hc-dday mono">${c.dd.label}</div>
+      <div class="hc-date mono">${fmt(c.date)}</div>
+    </div>
+  `).join('');
+}
+function catBadgeText(cat){ return cat ? `[${cat}] ` : ''; }
+
+/* ---------- 이번달 신고 마감 대상 ---------- */
+function renderMonthDueFilings(){
+  const today = todayDate();
+  const endOfThisMonth = new Date(today.getFullYear(), today.getMonth()+1, 0);
+  const due = state.requests
+    .filter(r=>!r.done && r.statutory && new Date(r.statutory) <= endOfThisMonth)
+    .sort((a,b)=> new Date(a.statutory) - new Date(b.statutory));
+  const overdueCount = due.filter(r=> new Date(r.statutory) < today).length;
+  document.getElementById('monthDueCount').textContent = due.length;
+  document.getElementById('monthDueSub').textContent = due.length
+    ? `${fmt(today)} 기준, ${today.getMonth()+1}월 말일(${fmt(endOfThisMonth)})까지 신고해야 함 (이 중 기한초과 ${overdueCount}건)`
+    : `${today.getMonth()+1}월 말일까지 신고할 대상이 없습니다.`;
+  const listEl = document.getElementById('monthDueList');
+  listEl.innerHTML = due.length === 0 ? '' : due.map(r=>{
+    const dd = ddayInfo(new Date(r.statutory));
+    return `<div class="mdl-item"><span class="mdl-name">${catBadgeHtml(r.category)}${escapeHtml(r.client)}${r.staff? ' · 담당 '+escapeHtml(r.staff):''}</span><span class="mdl-date mono">${fmtShort(new Date(r.statutory))}</span><span class="dday ${dd.cls}">${dd.label}</span></div>`;
+  }).join('');
+}
+
+/* ---------- 처리기한 준수 현황 ---------- */
+function computeCompliance(){
+  const done = state.requests.filter(r=>r.done && r.doneDate && r.statutory);
+  const total = done.length;
+  const onTime = done.filter(r=> new Date(r.doneDate) <= new Date(r.statutory)).length;
+  const late = total - onTime;
+  const rate = total ? Math.round(onTime/total*100) : null;
+  const byStaff = {};
+  done.forEach(r=>{
+    const s = r.staff || '미지정';
+    byStaff[s] = byStaff[s] || {total:0, onTime:0};
+    byStaff[s].total++;
+    if(new Date(r.doneDate) <= new Date(r.statutory)) byStaff[s].onTime++;
+  });
+  return {total, onTime, late, rate, byStaff};
+}
+function renderCompliance(){
+  const c = computeCompliance();
+  document.getElementById('compTotal').textContent = c.total;
+  document.getElementById('compOnTime').textContent = c.onTime;
+  document.getElementById('compLate').textContent = c.late;
+  document.getElementById('compRate').textContent = c.rate === null ? '-' : c.rate + '%';
+  const body = document.getElementById('compTableBody');
+  const staffNames = Object.keys(c.byStaff);
+  if(staffNames.length === 0){
+    body.innerHTML = `<tr><td colspan="4" class="compliance-empty">완료된 건이 없습니다.</td></tr>`;
+    return;
+  }
+  staffNames.sort();
+  body.innerHTML = staffNames.map(s=>{
+    const v = c.byStaff[s];
+    const rate = v.total ? Math.round(v.onTime/v.total*100) : 0;
+    return `<tr><td>${escapeHtml(s)}</td><td class="num mono">${v.total}</td><td class="num mono">${v.onTime}</td><td class="num mono">${rate}%</td></tr>`;
+  }).join('');
+}
+
+/* ---------- 달력 ---------- */
+function buildCalendar(year, month){
+  const grid = document.getElementById('calendarGrid');
+  const today = todayDate();
+  const firstWeekday = new Date(year, month-1, 1).getDay();
+  const daysInMonth = lastDayOfMonth(year, month-1);
+
+  let html = '';
+  for(let i=0;i<firstWeekday;i++) html += `<div class="cal-cell empty"></div>`;
+  for(let d=1; d<=daysInMonth; d++){
+    const isToday = (year===today.getFullYear() && month===today.getMonth()+1 && d===today.getDate());
+    let chips = '';
+    state.requests.forEach(r=>{
+      MILESTONE_DEFS.forEach(def=>{
+        const val = r[def.key];
+        if(!val) return;
+        const dt = new Date(val);
+        if(dt.getFullYear()===year && dt.getMonth()+1===month && dt.getDate()===d){
+          const cls = r.done ? 'done' : def.chip;
+          chips += `<div class="cal-item-chip ${cls}" title="[${def.label}] ${escapeHtml(r.client)}">${def.label} ${escapeHtml(r.client)}</div>`;
+        }
+      });
+    });
+    html += `
+      <div class="cal-cell has-day${isToday?' is-today':''}">
+        <div class="cal-daynum">${d}</div>
+        <div class="cal-items">${chips}</div>
+      </div>
+    `;
+  }
+  const totalCells = firstWeekday + daysInMonth;
+  const remainder = totalCells % 7;
+  if(remainder !== 0){
+    for(let i=0;i<7-remainder;i++) html += `<div class="cal-cell empty"></div>`;
+  }
+  grid.innerHTML = html;
+}
+
+/* ---------- 요약 카운트(다음 처리 단계 기준) ---------- */
+const SUMMARY_OVERDUE_WINDOW_DAYS = 10;
+const SUMMARY_UPCOMING_WINDOW_DAYS = 10;
+function classifyForSummary(dd){
+  if(dd.diff < 0) return (dd.diff >= -SUMMARY_OVERDUE_WINDOW_DAYS) ? 'overdue' : null;
+  if(dd.diff <= 3) return 'soon';
+  return (dd.diff <= SUMMARY_UPCOMING_WINDOW_DAYS) ? 'ok' : null;
+}
+let summaryDetailData = {overdue: [], soon: [], ok: []};
+let summaryDetailActive = null;
+function computeSummaryCounts(){
+  const lists = {overdue: [], soon: [], ok: []};
+  state.requests.filter(r=>!r.done).forEach(r=>{
+    const cm = currentMilestone(r);
+    const dd = ddayInfo(cm.date);
+    const bucket = classifyForSummary(dd);
+    if(bucket){
+      const label = `[${r.category}·${cm.label}] ${r.client}${r.task ? ' · '+r.task.slice(0,24) : ''}`;
+      lists[bucket].push({name: label, date: cm.date, dd});
+    }
+  });
+  Object.keys(lists).forEach(k => lists[k].sort((a,b)=>a.date-b.date));
+  summaryDetailData = lists;
+  return {overdue: lists.overdue.length, soon: lists.soon.length, ok: lists.ok.length};
+}
+const SUMMARY_DETAIL_TITLE = {overdue:'기한초과 상세', soon:'3일 이내 상세', ok:'진행중 상세'};
+const SUMMARY_DETAIL_CELL_ID = {overdue:'cellOverdue', soon:'cellSoon', ok:'cellOk'};
+function renderSummaryDetail(){
+  const panel = document.getElementById('summaryDetail');
+  document.querySelectorAll('.side-cell').forEach(el=>el.classList.remove('active'));
+  if(!summaryDetailActive){ panel.style.display = 'none'; return; }
+  document.getElementById(SUMMARY_DETAIL_CELL_ID[summaryDetailActive]).classList.add('active');
+  const items = summaryDetailData[summaryDetailActive] || [];
+  document.getElementById('summaryDetailHead').textContent = `${SUMMARY_DETAIL_TITLE[summaryDetailActive]} (${items.length}건)`;
+  const listEl = document.getElementById('summaryDetailList');
+  listEl.innerHTML = items.length === 0
+    ? '<div class="summary-detail-empty">해당하는 항목이 없습니다.</div>'
+    : items.map(it => `
+      <div class="summary-detail-item">
+        <span class="sdi-name">${escapeHtml(it.name)}</span>
+        <span class="sdi-date mono">${fmt(it.date)}</span>
+        <span class="dday ${it.dd.cls}">${it.dd.label}</span>
+      </div>
+    `).join('');
+  panel.style.display = '';
+}
+function toggleSummaryDetail(bucket){
+  summaryDetailActive = (summaryDetailActive === bucket) ? null : bucket;
+  renderSummaryDetail();
+}
+
+/* ---------- 목록 렌더 ---------- */
+function catBadgeHtml(cat){
+  if(!cat) return '';
+  const cls = CAT_CLASS[cat] || 'cat-etc';
+  return `<span class="req-cat ${cls}">${escapeHtml(cat)}</span>`;
+}
+
+function milestoneLineHtml(r, def, currentKey){
+  const val = r[def.key];
+  if(!val) return '';
+  const d = new Date(val);
+  const today = todayDate();
+  let dd;
+  if(r.done){
+    dd = {cls:'done', label:'완료'};
+  } else if(def.key === currentKey){
+    dd = ddayInfo(d);
+  } else if(d < today){
+    dd = {cls:'normal', label:'완료'};
+  } else {
+    dd = {cls:'normal', label:'예정'};
+  }
+  return `<div class="req-date-line"><span class="req-date-label">${def.label}</span><span class="dates">${fmtShort(d)}</span><span class="dday ${dd.cls}">${dd.label}</span></div>`;
+}
+
+function requestRowHtml(r){
+  const base = r.baseDate ? new Date(r.baseDate) : null;
+  const currentKey = r.done ? null : currentMilestoneKey(r);
+  const extra = [];
+  if(r.category === '양도' && r.assetType) extra.push(r.assetType === 'stock' ? '주식 등' : '부동산 등');
+  if(r.category === '상속' && r.nonResident) extra.push('비거주자 관련(9개월)');
+  const milestoneLines = MILESTONE_DEFS.map(def => milestoneLineHtml(r, def, currentKey)).join('');
+  return `
+    <div class="req-row">
+      <div class="req-main">
+        <div class="name">${catBadgeHtml(r.category)}${escapeHtml(r.client)}</div>
+        <div class="rule">${r.staff? '담당 '+escapeHtml(r.staff)+' · ' : ''}${base? '기준일 '+fmtShort(base)+' · ' : ''}${r.phone? '연락처 '+escapeHtml(r.phone) : ''}${extra.length? ' · '+extra.join(', ') : ''}</div>
+        <div class="req-task">${escapeHtml(r.task)}</div>
+        <div class="gcal-links">
+          ${base? `<button class="gcal-link" onclick="openGCal('baseDate','${r.id}')">🗓 기준일</button>` : ''}
+          ${r.meetingDate? `<button class="gcal-link" onclick="openGCal('meetingDate','${r.id}')">🗓 미팅일</button>` : ''}
+          ${r.docsDeadline? `<button class="gcal-link" onclick="openGCal('docsDeadline','${r.id}')">🗓 자료정리</button>` : ''}
+          ${r.reportDeadline? `<button class="gcal-link" onclick="openGCal('reportDeadline','${r.id}')">🗓 1차보고</button>` : ''}
+          ${r.closeDeadline? `<button class="gcal-link" onclick="openGCal('closeDeadline','${r.id}')">🗓 1차마감</button>` : ''}
+          <button class="gcal-link" onclick="openGCal('statutory','${r.id}')">🗓 법정신고</button>
+        </div>
+      </div>
+      <div class="req-dates">${milestoneLines}</div>
+      <div class="check-wrap">
+        <input type="checkbox" onchange="completeRequest('${r.id}', this)">
+        <div class="stamp" id="stamp-req-${r.id}">완료</div>
+      </div>
+      <button class="del" title="삭제" onclick="deleteRequest('${r.id}')">×</button>
+    </div>
+  `;
+}
+
+function renderRequestList(){
+  const reqList = document.getElementById('reqList');
+  buildCatFilter();
+  buildStaffFilter();
+  const active = state.requests
+    .filter(r=>!r.done)
+    .filter(r=> catFilterVal==='all' || r.category===catFilterVal)
+    .filter(r=> staffFilter==='all' || r.staff===staffFilter)
+    .sort((a,b)=> currentMilestone(a).date - currentMilestone(b).date);
+  reqList.innerHTML = active.length === 0
+    ? '<div class="empty">진행 중인 건이 없습니다.</div>'
+    : active.map(requestRowHtml).join('');
+}
+
+function renderDoneList(){
+  const doneList = document.getElementById('reqDoneList');
+  const done = state.requests.filter(r=>r.done);
+  doneList.innerHTML = done.length === 0 ? '<div class="empty">완료된 건이 없습니다.</div>' : '';
+  done.sort((a,b)=> new Date(b.statutory) - new Date(a.statutory));
+  done.forEach(r=>{
+    const row = document.createElement('div');
+    row.className = 'row';
+    const onTime = r.doneDate && r.statutory && (new Date(r.doneDate) <= new Date(r.statutory));
+    row.innerHTML = `
+      <div>
+        <div class="name">${catBadgeHtml(r.category)}${escapeHtml(r.client)}</div>
+        <div class="rule">${escapeHtml(r.task)} · 완료일 ${r.doneDate? fmtShort(new Date(r.doneDate)):''}${r.doneDate? (onTime? ' (기한 준수)':' (기한 초과)') : ''}</div>
+      </div>
+      <div class="dates">신고 ${fmtShort(new Date(r.statutory))}</div>
+      <div class="dday normal">완료</div>
+      <div></div>
+      <button class="del" title="삭제" onclick="deleteRequest('${r.id}')">×</button>
+    `;
+    doneList.appendChild(row);
+  });
+}
+
+function escapeHtml(s){
+  const d = document.createElement('div');
+  d.textContent = s == null ? '' : s;
+  return d.innerHTML;
+}
+
+/* ---------- 액션 ---------- */
+function togglePanel(id){ document.getElementById(id).classList.toggle('open'); }
+
+function formatPhoneInput(el){
+  let digits = el.value.replace(/\D/g, '').slice(0, 11);
+  let formatted;
+  if(digits.length <= 3) formatted = digits;
+  else if(digits.length <= 7) formatted = digits.slice(0,3) + '-' + digits.slice(3);
+  else formatted = digits.slice(0,3) + '-' + digits.slice(3,7) + '-' + digits.slice(7,11);
+  el.value = formatted;
+}
+
+function addRequest(){
+  const staff = document.getElementById('qStaff').value.trim();
+  const category = document.getElementById('qCategory').value;
+  const assetType = document.getElementById('qAssetType').value;
+  const nonResident = document.getElementById('qNonResident').checked;
+  const client = document.getElementById('qClient').value.trim();
+  const phone = document.getElementById('qPhone').value.trim();
+  const task = document.getElementById('qTask').value.trim();
+  const baseDateVal = document.getElementById('qBaseDate').value;
+  const meetingVal = document.getElementById('qMeeting').value;
+  const docsVal = document.getElementById('qDocs').value;
+  const reportVal = document.getElementById('qReport').value;
+  const closeVal = document.getElementById('qClose').value;
+  const statutoryVal = document.getElementById('qStatutory').value;
+  if(!client || !statutoryVal){ toast('거래처명/의뢰인명과 법정신고기한은 반드시 입력해 주세요.'); return; }
+
+  const toKey = (v) => v ? dateKey(new Date(v+'T00:00:00')) : '';
+  const calcNoteEl = document.getElementById('qCalcNote');
+  const statutoryNote = calcNoteEl.classList.contains('show') ? calcNoteEl.textContent : '';
+
+  state.requests.push({
+    id:'c'+Date.now(),
+    staff, category,
+    assetType: category==='양도' ? assetType : '',
+    nonResident: category==='상속' ? nonResident : false,
+    client, phone, task,
+    baseDate: toKey(baseDateVal),
+    meetingDate: toKey(meetingVal),
+    docsDeadline: toKey(docsVal),
+    reportDeadline: toKey(reportVal),
+    closeDeadline: toKey(closeVal),
+    statutory: toKey(statutoryVal),
+    statutoryNote,
+    done:false
+  });
+  saveState();
+  cloudSaveRequests();
+
+  ['qStaff','qClient','qPhone','qTask','qBaseDate','qMeeting','qDocs','qReport','qClose','qStatutory'].forEach(id=>{
+    document.getElementById(id).value='';
+  });
+  document.getElementById('qCategory').value='기타';
+  document.getElementById('qNonResident').checked=false;
+  document.getElementById('qCalcNote').classList.remove('show');
+  document.getElementById('qScheduleNote').classList.remove('show');
+  onCategoryChange();
+  togglePanel('panelReq');
+  render();
+  toast('등록되었습니다.');
+}
+
+function deleteRequest(id){
+  if(!confirm('삭제하시겠습니까?')) return;
+  state.requests = state.requests.filter(r=>r.id!==id);
+  saveState();
+  cloudSaveRequests();
+  render();
+}
+
+function completeRequest(id, checkbox){
+  const r = state.requests.find(x=>x.id===id);
+  if(!r) return;
+  r.done = true;
+  r.doneDate = dateKey(todayDate());
+  saveState();
+  cloudSaveRequests();
+  const stamp = document.getElementById('stamp-req-'+id);
+  stamp.classList.add('play');
+  setTimeout(()=>{ render(); }, 480);
+}
+
+function toggleDoneView(){
+  const el = document.getElementById('reqDoneList');
+  const btn = document.getElementById('toggleDoneBtn');
+  const show = el.style.display === 'none';
+  el.style.display = show ? 'block' : 'none';
+  btn.textContent = show ? '완료된 건 숨기기' : '완료된 건 보기';
+}
+
+/* ---------- 알림 ---------- */
+function requestNotifyPermission(){
+  if(!('Notification' in window)){ toast('이 브라우저는 알림을 지원하지 않습니다.'); return; }
+  Notification.requestPermission().then(p=>{
+    toast(p==='granted' ? '알림이 켜졌습니다.' : '알림 권한이 허용되지 않았습니다.');
+  });
+}
+function checkNotify(overdue, soon){
+  if(!('Notification' in window) || Notification.permission !== 'granted') return;
+  const key = 'lastNotifyCapital_'+dateKey(todayDate());
+  if(localStorage.getItem(key)) return;
+  if(overdue>0 || soon>0){
+    new Notification('자본거래·상속증여 신고관리대장', { body: `기한초과 ${overdue}건, 임박 ${soon}건이 있습니다.` });
+    localStorage.setItem(key, '1');
+  }
+}
+
+/* ---------- 구글 캘린더 연동(Quick Add 링크) ---------- */
+const GCAL_FIELD_LABEL = {baseDate:'기준일', meetingDate:'미팅일', docsDeadline:'자료정리기한', reportDeadline:'1차보고기한', closeDeadline:'1차마감기한', statutory:'법정신고기한'};
+function gcalUrl(title, dateObj, details){
+  const y = dateObj.getFullYear();
+  const m = String(dateObj.getMonth()+1).padStart(2,'0');
+  const d = String(dateObj.getDate()).padStart(2,'0');
+  const start = `${y}${m}${d}`;
+  const endObj = addDays(dateObj, 1);
+  const ey = endObj.getFullYear(), em = String(endObj.getMonth()+1).padStart(2,'0'), ed = String(endObj.getDate()).padStart(2,'0');
+  const end = `${ey}${em}${ed}`;
+  const params = new URLSearchParams({ action: 'TEMPLATE', text: title, dates: `${start}/${end}`, details: details || '' });
+  return 'https://calendar.google.com/calendar/render?' + params.toString();
+}
+function openGCal(kind, id){
+  const r = state.requests.find(x=>x.id===id);
+  if(!r) return;
+  const dateStr = r[kind];
+  if(!dateStr) return;
+  const common = `taxmancall 자본거래·상속증여 신고관리대장\n구분: ${r.category||'-'}\n거래처: ${r.client}\n내용: ${r.task}\n기준일: ${r.baseDate||'-'}\n미팅일: ${r.meetingDate||'-'}\n자료정리기한: ${r.docsDeadline||'-'}\n1차보고기한: ${r.reportDeadline||'-'}\n1차마감기한: ${r.closeDeadline||'-'}\n법정신고기한: ${r.statutory}${r.statutoryNote? '\n산정근거: '+r.statutoryNote : ''}`;
+  const catPrefix = r.category ? `[${r.category}] ` : '';
+  const title = `[${GCAL_FIELD_LABEL[kind]}] ${catPrefix}${r.client}`;
+  const d = new Date(dateStr+'T00:00:00');
+  window.open(gcalUrl(title, d, common), '_blank');
+}
+
+/* ---------- 내보내기 / 불러오기 ---------- */
+function exportData(){
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'taxmancall_capital_deadline_'+dateKey(todayDate())+'.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+function importData(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e=>{
+    try{
+      const data = JSON.parse(e.target.result);
+      if(!data.requests) throw new Error('형식 오류');
+      state = data;
+      saveState();
+      cloudSaveRequests();
+      render();
+      toast('불러오기가 완료되었습니다.');
+    }catch(err){
+      toast('파일을 읽을 수 없습니다. JSON 형식을 확인해 주세요.');
+    }
+  };
+  reader.readAsText(file);
+  evt.target.value = '';
+}
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+/* ---------- 초기화 ---------- */
+try{
+  onCategoryChange();
+  render();
+}catch(err){
+  console.error('초기 렌더링 오류:', err);
+  const reqList = document.getElementById('reqList');
+  if(reqList) reqList.innerHTML = '<div class="empty">화면을 불러오는 중 오류가 발생했습니다. F12(개발자도구) 콘솔의 오류 메시지를 확인해 주세요.</div>';
+}
+if(cloudEnabled()){
+  document.getElementById('syncBtn').style.display = '';
+  document.getElementById('pwBtn').style.display = '';
+  document.getElementById('cloudStatusNote').textContent = ' · 구글 시트로 사무실 공용 동기화됩니다';
+}
+cloudLoadRequests();
+</script>
+</body>
+</html>
